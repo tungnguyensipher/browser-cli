@@ -12,12 +12,12 @@ export function registerBrowserInspectCommands(
   browser
     .command("screenshot")
     .description("Capture a screenshot (MEDIA:<path>)")
-    .argument("[targetId]", "CDP target id (or unique prefix)")
+    .option("--target-id <id>", "CDP target id (or unique prefix)")
     .option("--full-page", "Capture full scrollable page", false)
     .option("--ref <ref>", "ARIA ref from ai snapshot")
     .option("--element <selector>", "CSS selector for element screenshot")
     .option("--type <png|jpeg>", "Output type (default: png)", "png")
-    .action(async (targetId: string | undefined, opts, cmd) => {
+    .action(async (opts, cmd) => {
       const parent = parentOpts(cmd);
       const profile = parent?.browserProfile;
       try {
@@ -28,7 +28,7 @@ export function registerBrowserInspectCommands(
             path: "/screenshot",
             query: profile ? { profile } : undefined,
             body: {
-              targetId: targetId?.trim() || undefined,
+              targetId: opts.targetId?.trim() || undefined,
               fullPage: Boolean(opts.fullPage),
               ref: opts.ref?.trim() || undefined,
               element: opts.element?.trim() || undefined,

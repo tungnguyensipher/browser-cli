@@ -35,6 +35,11 @@ describe("browser cli help", () => {
     expect(snapshotHelp.exitCode).toBe(0);
     expect(snapshotStdout).toContain("--refs");
 
+    const screenshotHelp = runCliHelp(["screenshot"]);
+    const screenshotStdout = new TextDecoder().decode(screenshotHelp.stdout);
+    expect(screenshotHelp.exitCode).toBe(0);
+    expect(screenshotStdout).toContain("--target-id");
+
     const uploadHelp = runCliHelp(["upload"]);
     const uploadStdout = new TextDecoder().decode(uploadHelp.stdout);
     expect(uploadHelp.exitCode).toBe(0);

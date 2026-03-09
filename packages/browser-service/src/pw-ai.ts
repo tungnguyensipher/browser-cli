@@ -1,3 +1,4 @@
+import { stopPwAiNodeBridge } from "./pw-ai-node-bridge.js";
 import { getPwAiModule } from "./pw-ai-module.js";
 
 export async function closePlaywrightBrowserConnection(params?: {
@@ -8,5 +9,8 @@ export async function closePlaywrightBrowserConnection(params?: {
     ?.closePlaywrightBrowserConnection;
   if (typeof close === "function") {
     await close(params);
+  }
+  if (!params?.cdpUrl) {
+    await stopPwAiNodeBridge();
   }
 }

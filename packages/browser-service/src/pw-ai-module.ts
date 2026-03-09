@@ -1,3 +1,5 @@
+import { getNodePwAiModule, resolvePwAiLoadStrategy } from "./pw-ai-node-bridge.js";
+
 export type PwAiModule = {
   listPagesViaPlaywright: (params: {
     cdpUrl: string;
@@ -85,6 +87,9 @@ export type PwAiModule = {
 export async function getPwAiModule(params?: {
   mode?: "soft" | "strict" | "optional";
 }): Promise<PwAiModule | null> {
+  if (resolvePwAiLoadStrategy() === "node-bridge") {
+    return await getNodePwAiModule();
+  }
   try {
     return (await import("@aibrowser/browser-engine-playwright")) as unknown as PwAiModule;
   } catch (error) {
