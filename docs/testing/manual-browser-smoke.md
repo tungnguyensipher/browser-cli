@@ -17,6 +17,16 @@ This smoke path validates the standalone browser service and CLI in Node-first m
 
 ## Start the service
 
+Preferred foreground daemon command:
+
+```bash
+AIBROWSER_AUTH_TOKEN=smoke-token \
+AIBROWSER_CONTROL_PORT=18888 \
+bun run packages/browser-cli/src/aibrowserd.ts run
+```
+
+Equivalent direct service bootstrap:
+
 ```bash
 AIBROWSER_AUTH_TOKEN=smoke-token \
 AIBROWSER_CONTROL_PORT=18888 \
@@ -25,7 +35,7 @@ bun --eval 'import { startBrowserControlServerFromConfig } from "./packages/brow
 
 Expected:
 
-- The process prints `STARTED:18888`.
+- The process prints either `aibrowserd listening on http://127.0.0.1:18888/` or `STARTED:18888`.
 - Requests without auth fail closed.
 
 ```bash

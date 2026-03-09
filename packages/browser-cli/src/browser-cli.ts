@@ -5,6 +5,7 @@ import { registerBrowserDebugCommands } from "./browser-cli-debug.js";
 import { registerBrowserExtensionCommands } from "./browser-cli-extension.js";
 import { registerBrowserInspectCommands } from "./browser-cli-inspect.js";
 import { registerBrowserManageCommands } from "./browser-cli-manage.js";
+import { registerBrowserServiceCommands } from "./browser-cli-service.js";
 import type { BrowserParentOpts } from "./browser-cli-shared.js";
 import { registerBrowserStateCommands } from "./browser-cli-state.js";
 
@@ -20,6 +21,7 @@ export function registerBrowserCli(program: Command) {
   const parentOpts = (cmd: Command) => cmd.optsWithGlobals() as BrowserParentOpts;
 
   registerBrowserManageCommands(program, parentOpts);
+  registerBrowserServiceCommands(program, parentOpts);
   registerBrowserExtensionCommands(program, parentOpts);
   registerBrowserInspectCommands(program, parentOpts);
   registerBrowserActionInputCommands(program, parentOpts);

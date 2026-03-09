@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "bin": {
-    "aibrowser": "./dist/index.js"
+    "aibrowser": "./dist/index.js",
+    "aibrowserd": "./dist/aibrowserd.js"
   },
   "exports": {
     ".": {
