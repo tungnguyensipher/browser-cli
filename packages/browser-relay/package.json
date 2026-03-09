@@ -12,7 +12,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "test:node-ws": "node ./scripts/node-upgrade-repro.mjs"
   },
   "dependencies": {
     "@aibrowser/browser-shared": "workspace:*",

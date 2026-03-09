@@ -5,6 +5,8 @@ import { loadRuntimeConfig, type RuntimeAuthConfig, type StandaloneRuntimeConfig
 
 export const RELAY_AUTH_HEADER = "x-openclaw-relay-token";
 const RELAY_TOKEN_CONTEXT = "openclaw-extension-relay-v1";
+type RelayAuthHeaderResolver = (url: string) => Record<string, string>;
+let relayAuthHeaderResolver: RelayAuthHeaderResolver = () => ({});
 
 export type BrowserControlAuth = RuntimeAuthConfig;
 
@@ -140,6 +142,10 @@ export function getChromeExtensionRelayAuthHeaders(
   url: string,
   env: NodeJS.ProcessEnv = process.env,
 ): Record<string, string> {
+  const fromRuntime = relayAuthHeaderResolver(url);
+  if (Object.keys(fromRuntime).length > 0) {
+    return fromRuntime;
+  }
   try {
     const parsed = new URL(url);
     if (!isLoopbackHost(parsed.hostname)) {
@@ -154,4 +160,10 @@ export function getChromeExtensionRelayAuthHeaders(
   } catch {
     return {};
   }
+}
+
+export function registerChromeExtensionRelayAuthHeaderResolver(
+  resolver: RelayAuthHeaderResolver,
+): void {
+  relayAuthHeaderResolver = resolver;
 }
