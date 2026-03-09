@@ -13,6 +13,7 @@
   ],
   "exclude": [
     "../browser-relay/src/**/*.test.ts",
+    "../browser-engine-playwright/src/**/*.test.ts",
     "src/**/*.test.ts"
   ]
 }
