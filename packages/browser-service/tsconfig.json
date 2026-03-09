@@ -2,8 +2,17 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "..",
     "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/**/*.ts",
+    "../browser-shared/src/**/*.ts",
+    "../browser-relay/src/**/*.ts",
+    "../browser-engine-playwright/src/**/*.ts"
+  ],
+  "exclude": [
+    "../browser-relay/src/**/*.test.ts",
+    "src/**/*.test.ts"
+  ]
 }
