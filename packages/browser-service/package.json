@@ -1,0 +1,26 @@
+{
+  "name": "@aibrowser/browser-service",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@aibrowser/browser-engine-playwright": "workspace:*",
+    "@aibrowser/browser-relay": "workspace:*",
+    "@aibrowser/browser-shared": "workspace:*",
+    "playwright-core": "1.58.2",
+    "sharp": "^0.34.5",
+    "ws": "^8.19.0",
+    "zod": "^4.3.6"
+  }
+}

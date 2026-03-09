@@ -1,0 +1,23 @@
+{
+  "name": "@aibrowser/browser-shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "ipaddr.js": "^2.3.0",
+    "undici": "^7.22.0",
+    "ws": "^8.19.0",
+    "zod": "^4.3.6"
+  }
+}

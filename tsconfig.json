@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmitOnError": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES2023",
+    "types": ["node"],
+    "useDefineForClassFields": false,
+    "paths": {
+      "@aibrowser/browser-shared": ["./packages/browser-shared/src/index.ts"],
+      "@aibrowser/browser-relay": ["./packages/browser-relay/src/index.ts"],
+      "@aibrowser/browser-service": ["./packages/browser-service/src/index.ts"],
+      "@aibrowser/browser-engine-playwright": [
+        "./packages/browser-engine-playwright/src/index.ts"
+      ],
+      "@aibrowser/browser-client": ["./packages/browser-client/src/index.ts"],
+      "@aibrowser/browser-cli": ["./packages/browser-cli/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

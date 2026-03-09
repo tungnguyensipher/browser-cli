@@ -1,0 +1,21 @@
+{
+  "name": "@aibrowser/browser-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@aibrowser/browser-shared": "workspace:*",
+    "undici": "^7.22.0"
+  }
+}

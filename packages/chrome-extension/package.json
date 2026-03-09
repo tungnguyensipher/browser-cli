@@ -1,0 +1,14 @@
+{
+  "name": "@aibrowser/chrome-extension",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "**/*"
+  ],
+  "scripts": {
+    "build": "bun --version",
+    "typecheck": "bun --version",
+    "test": "bun test"
+  }
+}
