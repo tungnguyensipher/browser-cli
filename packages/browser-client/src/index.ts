@@ -20,6 +20,7 @@ import {
   type ProfileStatus,
   type SnapshotResult,
 } from "./client.js";
+import type { BrowserTransport } from "./client-actions-url.js";
 import {
   browserAct,
   browserArmDialog,
@@ -66,6 +67,8 @@ type WithOptionalProfile = { profile?: string };
 export type BrowserClientOptions = {
   baseUrl?: string;
   defaultProfile?: string;
+  authToken?: string;
+  authPassword?: string;
 };
 
 function withDefaultProfile<T extends WithOptionalProfile | undefined>(
@@ -274,66 +277,92 @@ export type BrowserClient = {
 };
 
 export function createBrowserClient(options: BrowserClientOptions = {}): BrowserClient {
-  const { baseUrl, defaultProfile } = options;
+  const { authPassword, authToken, baseUrl, defaultProfile } = options;
+  const transport: BrowserTransport | undefined =
+    authToken || authPassword
+      ? {
+          baseUrl,
+          auth: {
+            ...(authToken ? { token: authToken } : {}),
+            ...(authPassword ? { password: authPassword } : {}),
+          },
+        }
+      : baseUrl;
 
   return {
-    browserStatus: (opts) => browserStatus(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserProfiles: () => browserProfiles(baseUrl),
-    browserStart: (opts) => browserStart(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserStop: (opts) => browserStop(baseUrl, withDefaultProfile(opts, defaultProfile)),
+    browserStatus: (opts) => browserStatus(transport, withDefaultProfile(opts, defaultProfile)),
+    browserProfiles: () => browserProfiles(transport),
+    browserStart: (opts) => browserStart(transport, withDefaultProfile(opts, defaultProfile)),
+    browserStop: (opts) => browserStop(transport, withDefaultProfile(opts, defaultProfile)),
     browserResetProfile: (opts) =>
-      browserResetProfile(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserCreateProfile: (opts) => browserCreateProfile(baseUrl, opts),
-    browserDeleteProfile: (profile) => browserDeleteProfile(baseUrl, profile),
-    browserTabs: (opts) => browserTabs(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserOpenTab: (url, opts) => browserOpenTab(baseUrl, url, withDefaultProfile(opts, defaultProfile)),
+      browserResetProfile(transport, withDefaultProfile(opts, defaultProfile)),
+    browserCreateProfile: (opts) => browserCreateProfile(transport, opts),
+    browserDeleteProfile: (profile) => browserDeleteProfile(transport, profile),
+    browserTabs: (opts) => browserTabs(transport, withDefaultProfile(opts, defaultProfile)),
+    browserOpenTab: (url, opts) =>
+      browserOpenTab(transport, url, withDefaultProfile(opts, defaultProfile)),
     browserFocusTab: (targetId, opts) =>
-      browserFocusTab(baseUrl, targetId, withDefaultProfile(opts, defaultProfile)),
+      browserFocusTab(transport, targetId, withDefaultProfile(opts, defaultProfile)),
     browserCloseTab: (targetId, opts) =>
-      browserCloseTab(baseUrl, targetId, withDefaultProfile(opts, defaultProfile)),
-    browserTabAction: (opts) => browserTabAction(baseUrl, withDefaultProfile(opts, defaultProfile)!),
-    browserSnapshot: (opts) => browserSnapshot(baseUrl, withDefaultProfile(opts, defaultProfile)!),
-    browserNavigate: (opts) => browserNavigate(baseUrl, withDefaultProfile(opts, defaultProfile)!),
-    browserArmDialog: (opts) => browserArmDialog(baseUrl, withDefaultProfile(opts, defaultProfile)!),
+      browserCloseTab(transport, targetId, withDefaultProfile(opts, defaultProfile)),
+    browserTabAction: (opts) =>
+      browserTabAction(transport, withDefaultProfile(opts, defaultProfile)!),
+    browserSnapshot: (opts) => browserSnapshot(transport, withDefaultProfile(opts, defaultProfile)!),
+    browserNavigate: (opts) => browserNavigate(transport, withDefaultProfile(opts, defaultProfile)!),
+    browserArmDialog: (opts) =>
+      browserArmDialog(transport, withDefaultProfile(opts, defaultProfile)!),
     browserArmFileChooser: (opts) =>
-      browserArmFileChooser(baseUrl, withDefaultProfile(opts, defaultProfile)!),
+      browserArmFileChooser(transport, withDefaultProfile(opts, defaultProfile)!),
     browserWaitForDownload: (opts) =>
-      browserWaitForDownload(baseUrl, withDefaultProfile(opts, defaultProfile)!),
-    browserDownload: (opts) => browserDownload(baseUrl, withDefaultProfile(opts, defaultProfile)!),
-    browserAct: (req, opts) => browserAct(baseUrl, req, withDefaultProfile(opts, defaultProfile)),
+      browserWaitForDownload(transport, withDefaultProfile(opts, defaultProfile)!),
+    browserDownload: (opts) =>
+      browserDownload(transport, withDefaultProfile(opts, defaultProfile)!),
+    browserAct: (req, opts) =>
+      browserAct(transport, req, withDefaultProfile(opts, defaultProfile)),
     browserScreenshotAction: (opts) =>
-      browserScreenshotAction(baseUrl, withDefaultProfile(opts, defaultProfile)!),
+      browserScreenshotAction(transport, withDefaultProfile(opts, defaultProfile)!),
     browserConsoleMessages: (opts) =>
-      browserConsoleMessages(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserPdfSave: (opts) => browserPdfSave(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserPageErrors: (opts) => browserPageErrors(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserRequests: (opts) => browserRequests(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserTraceStart: (opts) => browserTraceStart(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserTraceStop: (opts) => browserTraceStop(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserHighlight: (opts) => browserHighlight(baseUrl, withDefaultProfile(opts, defaultProfile)!),
+      browserConsoleMessages(transport, withDefaultProfile(opts, defaultProfile)),
+    browserPdfSave: (opts) => browserPdfSave(transport, withDefaultProfile(opts, defaultProfile)),
+    browserPageErrors: (opts) =>
+      browserPageErrors(transport, withDefaultProfile(opts, defaultProfile)),
+    browserRequests: (opts) => browserRequests(transport, withDefaultProfile(opts, defaultProfile)),
+    browserTraceStart: (opts) =>
+      browserTraceStart(transport, withDefaultProfile(opts, defaultProfile)),
+    browserTraceStop: (opts) => browserTraceStop(transport, withDefaultProfile(opts, defaultProfile)),
+    browserHighlight: (opts) =>
+      browserHighlight(transport, withDefaultProfile(opts, defaultProfile)!),
     browserResponseBody: (opts) =>
-      browserResponseBody(baseUrl, withDefaultProfile(opts, defaultProfile)!),
-    browserCookies: (opts) => browserCookies(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserCookiesSet: (opts) => browserCookiesSet(baseUrl, withDefaultProfile(opts, defaultProfile)!),
+      browserResponseBody(transport, withDefaultProfile(opts, defaultProfile)!),
+    browserCookies: (opts) => browserCookies(transport, withDefaultProfile(opts, defaultProfile)),
+    browserCookiesSet: (opts) =>
+      browserCookiesSet(transport, withDefaultProfile(opts, defaultProfile)!),
     browserCookiesClear: (opts) =>
-      browserCookiesClear(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserStorageGet: (opts) => browserStorageGet(baseUrl, withDefaultProfile(opts, defaultProfile)!),
-    browserStorageSet: (opts) => browserStorageSet(baseUrl, withDefaultProfile(opts, defaultProfile)!),
+      browserCookiesClear(transport, withDefaultProfile(opts, defaultProfile)),
+    browserStorageGet: (opts) =>
+      browserStorageGet(transport, withDefaultProfile(opts, defaultProfile)!),
+    browserStorageSet: (opts) =>
+      browserStorageSet(transport, withDefaultProfile(opts, defaultProfile)!),
     browserStorageClear: (opts) =>
-      browserStorageClear(baseUrl, withDefaultProfile(opts, defaultProfile)!),
-    browserSetOffline: (opts) => browserSetOffline(baseUrl, withDefaultProfile(opts, defaultProfile)!),
-    browserSetHeaders: (opts) => browserSetHeaders(baseUrl, withDefaultProfile(opts, defaultProfile)!),
+      browserStorageClear(transport, withDefaultProfile(opts, defaultProfile)!),
+    browserSetOffline: (opts) =>
+      browserSetOffline(transport, withDefaultProfile(opts, defaultProfile)!),
+    browserSetHeaders: (opts) =>
+      browserSetHeaders(transport, withDefaultProfile(opts, defaultProfile)!),
     browserSetHttpCredentials: (opts) =>
-      browserSetHttpCredentials(baseUrl, withDefaultProfile(opts, defaultProfile)),
+      browserSetHttpCredentials(transport, withDefaultProfile(opts, defaultProfile)),
     browserSetGeolocation: (opts) =>
-      browserSetGeolocation(baseUrl, withDefaultProfile(opts, defaultProfile)),
-    browserSetMedia: (opts) => browserSetMedia(baseUrl, withDefaultProfile(opts, defaultProfile)!),
+      browserSetGeolocation(transport, withDefaultProfile(opts, defaultProfile)),
+    browserSetMedia: (opts) =>
+      browserSetMedia(transport, withDefaultProfile(opts, defaultProfile)!),
     browserSetTimezone: (opts) =>
-      browserSetTimezone(baseUrl, withDefaultProfile(opts, defaultProfile)!),
-    browserSetLocale: (opts) => browserSetLocale(baseUrl, withDefaultProfile(opts, defaultProfile)!),
-    browserSetDevice: (opts) => browserSetDevice(baseUrl, withDefaultProfile(opts, defaultProfile)!),
+      browserSetTimezone(transport, withDefaultProfile(opts, defaultProfile)!),
+    browserSetLocale: (opts) =>
+      browserSetLocale(transport, withDefaultProfile(opts, defaultProfile)!),
+    browserSetDevice: (opts) =>
+      browserSetDevice(transport, withDefaultProfile(opts, defaultProfile)!),
     browserClearPermissions: (opts) =>
-      browserClearPermissions(baseUrl, withDefaultProfile(opts, defaultProfile)),
+      browserClearPermissions(transport, withDefaultProfile(opts, defaultProfile)),
   };
 }
 

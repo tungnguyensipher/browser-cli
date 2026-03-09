@@ -1,5 +1,9 @@
 import type { BrowserActionPathResult, BrowserActionTargetOk } from "./client-actions-types.js";
-import { buildProfileQuery, withBaseUrl } from "./client-actions-url.js";
+import {
+  buildProfileQuery,
+  withBaseUrl,
+  type BrowserTransport,
+} from "./client-actions-url.js";
 import { fetchBrowserJson } from "./client-fetch.js";
 
 export type BrowserConsoleMessage = {
@@ -43,7 +47,7 @@ function buildQuerySuffix(params: Array<[string, string | boolean | undefined]>)
 }
 
 export async function browserConsoleMessages(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { level?: string; targetId?: string; profile?: string } = {},
 ): Promise<{ ok: true; messages: BrowserConsoleMessage[]; targetId: string }> {
   const suffix = buildQuerySuffix([
@@ -59,7 +63,7 @@ export async function browserConsoleMessages(
 }
 
 export async function browserPdfSave(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { targetId?: string; profile?: string } = {},
 ): Promise<BrowserActionPathResult> {
   const q = buildProfileQuery(opts.profile);
@@ -72,7 +76,7 @@ export async function browserPdfSave(
 }
 
 export async function browserPageErrors(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { targetId?: string; clear?: boolean; profile?: string } = {},
 ): Promise<{ ok: true; targetId: string; errors: BrowserPageError[] }> {
   const suffix = buildQuerySuffix([
@@ -88,7 +92,7 @@ export async function browserPageErrors(
 }
 
 export async function browserRequests(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     targetId?: string;
     filter?: string;
@@ -110,7 +114,7 @@ export async function browserRequests(
 }
 
 export async function browserTraceStart(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     targetId?: string;
     screenshots?: boolean;
@@ -134,7 +138,7 @@ export async function browserTraceStart(
 }
 
 export async function browserTraceStop(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { targetId?: string; path?: string; profile?: string } = {},
 ): Promise<BrowserActionPathResult> {
   const q = buildProfileQuery(opts.profile);
@@ -147,7 +151,7 @@ export async function browserTraceStop(
 }
 
 export async function browserHighlight(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { ref: string; targetId?: string; profile?: string },
 ): Promise<BrowserActionTargetOk> {
   const q = buildProfileQuery(opts.profile);
@@ -160,7 +164,7 @@ export async function browserHighlight(
 }
 
 export async function browserResponseBody(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     url: string;
     targetId?: string;

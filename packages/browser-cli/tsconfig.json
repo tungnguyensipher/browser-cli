@@ -2,8 +2,16 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "..",
     "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/**/*.ts",
+    "../browser-client/src/**/*.ts",
+    "../browser-shared/src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "../browser-client/src/**/*.test.ts"
+  ]
 }

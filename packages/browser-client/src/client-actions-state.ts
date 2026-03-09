@@ -1,5 +1,9 @@
 import type { BrowserActionOk, BrowserActionTargetOk } from "./client-actions-types.js";
-import { buildProfileQuery, withBaseUrl } from "./client-actions-url.js";
+import {
+  buildProfileQuery,
+  withBaseUrl,
+  type BrowserTransport,
+} from "./client-actions-url.js";
 import { fetchBrowserJson } from "./client-fetch.js";
 
 type TargetedProfileOptions = {
@@ -37,7 +41,7 @@ function buildStateQuery(params: { targetId?: string; key?: string; profile?: st
 }
 
 async function postProfileJson<T>(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   params: { path: string; profile?: string; body: unknown },
 ): Promise<T> {
   const query = buildProfileQuery(params.profile);
@@ -50,7 +54,7 @@ async function postProfileJson<T>(
 }
 
 async function postTargetedProfileJson(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   params: {
     path: string;
     opts: { targetId?: string; profile?: string };
@@ -68,7 +72,7 @@ async function postTargetedProfileJson(
 }
 
 export async function browserCookies(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { targetId?: string; profile?: string } = {},
 ): Promise<{ ok: true; targetId: string; cookies: unknown[] }> {
   const suffix = buildStateQuery({ targetId: opts.targetId, profile: opts.profile });
@@ -80,7 +84,7 @@ export async function browserCookies(
 }
 
 export async function browserCookiesSet(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     cookie: Record<string, unknown>;
     targetId?: string;
@@ -95,7 +99,7 @@ export async function browserCookiesSet(
 }
 
 export async function browserCookiesClear(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { targetId?: string; profile?: string } = {},
 ): Promise<BrowserActionTargetOk> {
   return await postProfileJson<BrowserActionTargetOk>(baseUrl, {
@@ -106,7 +110,7 @@ export async function browserCookiesClear(
 }
 
 export async function browserStorageGet(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     kind: "local" | "session";
     key?: string;
@@ -123,7 +127,7 @@ export async function browserStorageGet(
 }
 
 export async function browserStorageSet(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     kind: "local" | "session";
     key: string;
@@ -144,7 +148,7 @@ export async function browserStorageSet(
 }
 
 export async function browserStorageClear(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { kind: "local" | "session"; targetId?: string; profile?: string },
 ): Promise<BrowserActionTargetOk> {
   return await postProfileJson<BrowserActionTargetOk>(baseUrl, {
@@ -155,7 +159,7 @@ export async function browserStorageClear(
 }
 
 export async function browserSetOffline(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { offline: boolean; targetId?: string; profile?: string },
 ): Promise<BrowserActionTargetOk> {
   return await postProfileJson<BrowserActionTargetOk>(baseUrl, {
@@ -166,7 +170,7 @@ export async function browserSetOffline(
 }
 
 export async function browserSetHeaders(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     headers: Record<string, string>;
     targetId?: string;
@@ -181,7 +185,7 @@ export async function browserSetHeaders(
 }
 
 export async function browserSetHttpCredentials(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: HttpCredentialsOptions = {},
 ): Promise<BrowserActionTargetOk> {
   return await postTargetedProfileJson(baseUrl, {
@@ -196,7 +200,7 @@ export async function browserSetHttpCredentials(
 }
 
 export async function browserSetGeolocation(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: GeolocationOptions = {},
 ): Promise<BrowserActionTargetOk> {
   return await postTargetedProfileJson(baseUrl, {
@@ -213,7 +217,7 @@ export async function browserSetGeolocation(
 }
 
 export async function browserSetMedia(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     colorScheme: "dark" | "light" | "no-preference" | "none";
     targetId?: string;
@@ -231,7 +235,7 @@ export async function browserSetMedia(
 }
 
 export async function browserSetTimezone(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { timezoneId: string; targetId?: string; profile?: string },
 ): Promise<BrowserActionTargetOk> {
   return await postProfileJson<BrowserActionTargetOk>(baseUrl, {
@@ -245,7 +249,7 @@ export async function browserSetTimezone(
 }
 
 export async function browserSetLocale(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { locale: string; targetId?: string; profile?: string },
 ): Promise<BrowserActionTargetOk> {
   return await postProfileJson<BrowserActionTargetOk>(baseUrl, {
@@ -256,7 +260,7 @@ export async function browserSetLocale(
 }
 
 export async function browserSetDevice(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { name: string; targetId?: string; profile?: string },
 ): Promise<BrowserActionTargetOk> {
   return await postProfileJson<BrowserActionTargetOk>(baseUrl, {
@@ -267,7 +271,7 @@ export async function browserSetDevice(
 }
 
 export async function browserClearPermissions(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: { targetId?: string; profile?: string } = {},
 ): Promise<BrowserActionOk> {
   return await postProfileJson<BrowserActionOk>(baseUrl, {

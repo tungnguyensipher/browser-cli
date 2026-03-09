@@ -70,4 +70,35 @@ describe("createBrowserClient", () => {
     const url = new URL(calls[0]!);
     expect(url.searchParams.get("profile")).toBe("openclaw");
   });
+
+  it("passes explicit auth headers for non-loopback base urls", async () => {
+    globalThis.fetch = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      expect(headers.get("authorization")).toBe("Bearer remote-token");
+      return new Response(
+        JSON.stringify({
+          enabled: true,
+          running: true,
+          pid: 1,
+          cdpPort: 18792,
+          chosenBrowser: "chrome",
+          userDataDir: null,
+          color: "#FF4500",
+          headless: false,
+          attachOnly: false,
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      );
+    }) as typeof fetch;
+
+    const client = createBrowserClient({
+      baseUrl: "https://browser.example.com",
+      authToken: "remote-token",
+    });
+
+    await client.browserStatus();
+  });
 });

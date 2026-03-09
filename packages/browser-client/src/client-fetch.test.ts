@@ -96,6 +96,25 @@ describe("fetchBrowserJson", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("uses explicit auth for non-loopback URLs when provided by the caller", async () => {
+    const fetchMock = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      expect(headers.get("authorization")).toBe("Bearer remote-token");
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    await fetchBrowserJson<{ ok: boolean }>(
+      { url: "https://browser.example.com/", auth: { token: "remote-token" } },
+      {},
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("resolves relative paths against the standalone control port and stays on HTTP transport", async () => {
     const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
       expect(String(input)).toBe("http://127.0.0.1:18888/tabs");

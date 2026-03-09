@@ -3,7 +3,11 @@ import type {
   BrowserActionPathResult,
   BrowserActionTabResult,
 } from "./client-actions-types.js";
-import { buildProfileQuery, withBaseUrl } from "./client-actions-url.js";
+import {
+  buildProfileQuery,
+  withBaseUrl,
+  type BrowserTransport,
+} from "./client-actions-url.js";
 import { fetchBrowserJson } from "./client-fetch.js";
 
 export type BrowserFormField = {
@@ -91,7 +95,7 @@ export type BrowserDownloadPayload = {
 type BrowserDownloadResult = { ok: true; targetId: string; download: BrowserDownloadPayload };
 
 async function postDownloadRequest(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   route: "/wait/download" | "/download",
   body: Record<string, unknown>,
   profile?: string,
@@ -106,7 +110,7 @@ async function postDownloadRequest(
 }
 
 export async function browserNavigate(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     url: string;
     targetId?: string;
@@ -123,7 +127,7 @@ export async function browserNavigate(
 }
 
 export async function browserArmDialog(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     accept: boolean;
     promptText?: string;
@@ -147,7 +151,7 @@ export async function browserArmDialog(
 }
 
 export async function browserArmFileChooser(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     paths: string[];
     ref?: string;
@@ -175,7 +179,7 @@ export async function browserArmFileChooser(
 }
 
 export async function browserWaitForDownload(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     path?: string;
     targetId?: string;
@@ -196,7 +200,7 @@ export async function browserWaitForDownload(
 }
 
 export async function browserDownload(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     ref: string;
     path: string;
@@ -219,7 +223,7 @@ export async function browserDownload(
 }
 
 export async function browserAct(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   req: BrowserActRequest,
   opts?: { profile?: string },
 ): Promise<BrowserActResponse> {
@@ -233,7 +237,7 @@ export async function browserAct(
 }
 
 export async function browserScreenshotAction(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     targetId?: string;
     fullPage?: boolean;

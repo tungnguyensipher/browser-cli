@@ -1,4 +1,8 @@
-import { buildProfileQuery, withBaseUrl } from "./client-actions-url.js";
+import {
+  buildProfileQuery,
+  withBaseUrl,
+  type BrowserTransport,
+} from "./client-actions-url.js";
 import { fetchBrowserJson } from "./client-fetch.js";
 
 export type BrowserStatus = {
@@ -90,7 +94,7 @@ export type SnapshotResult =
     };
 
 export async function browserStatus(
-  baseUrl?: string,
+  baseUrl?: BrowserTransport,
   opts?: { profile?: string },
 ): Promise<BrowserStatus> {
   const q = buildProfileQuery(opts?.profile);
@@ -99,7 +103,7 @@ export async function browserStatus(
   });
 }
 
-export async function browserProfiles(baseUrl?: string): Promise<ProfileStatus[]> {
+export async function browserProfiles(baseUrl?: BrowserTransport): Promise<ProfileStatus[]> {
   const res = await fetchBrowserJson<{ profiles: ProfileStatus[] }>(
     withBaseUrl(baseUrl, `/profiles`),
     {
@@ -109,7 +113,10 @@ export async function browserProfiles(baseUrl?: string): Promise<ProfileStatus[]
   return res.profiles ?? [];
 }
 
-export async function browserStart(baseUrl?: string, opts?: { profile?: string }): Promise<void> {
+export async function browserStart(
+  baseUrl?: BrowserTransport,
+  opts?: { profile?: string },
+): Promise<void> {
   const q = buildProfileQuery(opts?.profile);
   await fetchBrowserJson(withBaseUrl(baseUrl, `/start${q}`), {
     method: "POST",
@@ -117,7 +124,10 @@ export async function browserStart(baseUrl?: string, opts?: { profile?: string }
   });
 }
 
-export async function browserStop(baseUrl?: string, opts?: { profile?: string }): Promise<void> {
+export async function browserStop(
+  baseUrl?: BrowserTransport,
+  opts?: { profile?: string },
+): Promise<void> {
   const q = buildProfileQuery(opts?.profile);
   await fetchBrowserJson(withBaseUrl(baseUrl, `/stop${q}`), {
     method: "POST",
@@ -126,7 +136,7 @@ export async function browserStop(baseUrl?: string, opts?: { profile?: string })
 }
 
 export async function browserResetProfile(
-  baseUrl?: string,
+  baseUrl?: BrowserTransport,
   opts?: { profile?: string },
 ): Promise<BrowserResetProfileResult> {
   const q = buildProfileQuery(opts?.profile);
@@ -149,7 +159,7 @@ export type BrowserCreateProfileResult = {
 };
 
 export async function browserCreateProfile(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     name: string;
     color?: string;
@@ -180,7 +190,7 @@ export type BrowserDeleteProfileResult = {
 };
 
 export async function browserDeleteProfile(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   profile: string,
 ): Promise<BrowserDeleteProfileResult> {
   return await fetchBrowserJson<BrowserDeleteProfileResult>(
@@ -193,7 +203,7 @@ export async function browserDeleteProfile(
 }
 
 export async function browserTabs(
-  baseUrl?: string,
+  baseUrl?: BrowserTransport,
   opts?: { profile?: string },
 ): Promise<BrowserTab[]> {
   const q = buildProfileQuery(opts?.profile);
@@ -205,7 +215,7 @@ export async function browserTabs(
 }
 
 export async function browserOpenTab(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   url: string,
   opts?: { profile?: string },
 ): Promise<BrowserTab> {
@@ -219,7 +229,7 @@ export async function browserOpenTab(
 }
 
 export async function browserFocusTab(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   targetId: string,
   opts?: { profile?: string },
 ): Promise<void> {
@@ -233,7 +243,7 @@ export async function browserFocusTab(
 }
 
 export async function browserCloseTab(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   targetId: string,
   opts?: { profile?: string },
 ): Promise<void> {
@@ -245,7 +255,7 @@ export async function browserCloseTab(
 }
 
 export async function browserTabAction(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     action: "list" | "new" | "close" | "select";
     index?: number;
@@ -265,7 +275,7 @@ export async function browserTabAction(
 }
 
 export async function browserSnapshot(
-  baseUrl: string | undefined,
+  baseUrl: BrowserTransport | undefined,
   opts: {
     format?: "aria" | "ai";
     targetId?: string;

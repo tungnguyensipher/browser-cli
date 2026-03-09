@@ -5,6 +5,7 @@ import {
   resolveBrowserControlAuth,
   type BrowserControlAuth,
 } from "@aibrowser/browser-shared";
+import type { BrowserRequestTarget } from "./client-actions-url.js";
 
 export type BrowserFetchInit = RequestInit & {
   timeoutMs?: number;
@@ -62,15 +63,24 @@ function withLoopbackBrowserAuth(
   if (headers.has("authorization") || headers.has("x-openclaw-password")) {
     return { ...init, headers };
   }
+  const auth = init?.auth;
+  if (auth?.token) {
+    headers.set("Authorization", `Bearer ${auth.token}`);
+    return { ...init, headers };
+  } else if (auth?.password) {
+    headers.set("x-openclaw-password", auth.password);
+    return { ...init, headers };
+  }
+
   if (!isLoopbackHttpUrl(url)) {
     return { ...init, headers };
   }
 
-  const auth = init?.auth ?? resolveBrowserControlAuth();
-  if (auth.token) {
-    headers.set("Authorization", `Bearer ${auth.token}`);
-  } else if (auth.password) {
-    headers.set("x-openclaw-password", auth.password);
+  const loopbackAuth = resolveBrowserControlAuth();
+  if (loopbackAuth.token) {
+    headers.set("Authorization", `Bearer ${loopbackAuth.token}`);
+  } else if (loopbackAuth.password) {
+    headers.set("x-openclaw-password", loopbackAuth.password);
   }
 
   return { ...init, headers };
@@ -131,11 +141,19 @@ async function fetchHttpJson<T>(url: string, init: BrowserFetchInit): Promise<T>
   }
 }
 
-export async function fetchBrowserJson<T>(url: string, init?: BrowserFetchInit): Promise<T> {
+export async function fetchBrowserJson<T>(
+  target: BrowserRequestTarget,
+  init?: BrowserFetchInit,
+): Promise<T> {
   const timeoutMs = init?.timeoutMs ?? 5000;
-  const requestUrl = resolveRequestUrl(url, init?.baseUrl);
+  const auth =
+    typeof target === "string"
+      ? init?.auth
+      : (target.auth ?? init?.auth);
+  const rawUrl = typeof target === "string" ? target : target.url;
+  const requestUrl = resolveRequestUrl(rawUrl, init?.baseUrl);
   try {
-    const requestInit = withLoopbackBrowserAuth(requestUrl, init);
+    const requestInit = withLoopbackBrowserAuth(requestUrl, { ...init, auth });
     return await fetchHttpJson<T>(requestUrl, { ...requestInit, timeoutMs });
   } catch (err) {
     if (err instanceof BrowserServiceError) {
