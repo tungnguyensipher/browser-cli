@@ -1,4 +1,4 @@
-import type { SsrFPolicy } from "../../browser-shared/src/network-security.js";
+import type { SsrFPolicy } from "@aibrowser/browser-shared";
 import { type AriaSnapshotNode, formatAriaSnapshot, type RawAXNode } from "./cdp.js";
 import {
   assertBrowserNavigationAllowed,

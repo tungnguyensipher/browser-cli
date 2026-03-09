@@ -1,1 +1,1 @@
-export * from "../../browser-shared/src/navigation-guard.js";
+export * from "@aibrowser/browser-shared";

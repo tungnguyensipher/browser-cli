@@ -7,7 +7,7 @@ import type {
   Response,
 } from "playwright-core";
 import { chromium } from "playwright-core";
-import type { SsrFPolicy } from "../../browser-shared/src/network-security.js";
+import type { SsrFPolicy } from "@aibrowser/browser-shared";
 import { withNoProxyForCdpUrl } from "./cdp-proxy-bypass.js";
 import {
   appendCdpPath,

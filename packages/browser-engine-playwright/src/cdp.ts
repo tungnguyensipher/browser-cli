@@ -1,1 +1,1 @@
-export * from "../../browser-shared/src/cdp.js";
+export * from "@aibrowser/browser-shared";
