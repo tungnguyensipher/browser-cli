@@ -18,6 +18,8 @@
     "@aibrowser/browser-engine-playwright": "workspace:*",
     "@aibrowser/browser-relay": "workspace:*",
     "@aibrowser/browser-shared": "workspace:*",
+    "@types/express": "^5.0.5",
+    "express": "^5.1.0",
     "playwright-core": "1.58.2",
     "sharp": "^0.34.5",
     "ws": "^8.19.0",

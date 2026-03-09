@@ -1,4 +1,16 @@
-export * from "@aibrowser/browser-shared";
+export {
+  parseHttpUrl,
+  resolveBrowserConfig,
+  resolveProfile,
+  type ResolvedBrowserConfig,
+  type ResolvedBrowserProfile,
+} from "@aibrowser/browser-shared";
+export {
+  loadRuntimeConfig,
+  type BrowserConfig,
+  type BrowserProfileConfig,
+  type StandaloneRuntimeConfig,
+} from "@aibrowser/browser-shared";
 
 export function deriveDefaultBrowserCdpPortRange(browserControlPort: number): {
   start: number;
