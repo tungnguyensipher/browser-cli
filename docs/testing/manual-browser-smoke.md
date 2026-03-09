@@ -131,6 +131,7 @@ Expected: `running: false`
 
 - The standalone relay package and auth behavior are covered by package tests.
 - Full relay + Chrome extension end-to-end validation is intentionally deferred until the unpacked extension is installed in Chrome for this repo.
+- Under Bun, unauthorized WebSocket upgrades on the relay currently close the socket before emitting the expected HTTP `401` status line. We are treating that as a known Bun runtime limitation for now, not as a blocker for the standalone browser-service or Playwright UX contracts.
 - Once the extension is installed, add manual checks for:
   - `GET /extension/status`
   - `GET /json/version`
