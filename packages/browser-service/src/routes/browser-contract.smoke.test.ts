@@ -181,13 +181,13 @@ function createHarness(): TestHarness {
 
   const state: BrowserServerState = {
     server: null,
-    port: 18791,
+    port: 18888,
     resolved: {
       enabled: true,
       evaluateEnabled: true,
-      controlPort: 18791,
-      cdpPortRangeStart: 18800,
-      cdpPortRangeEnd: 18899,
+      controlPort: 18888,
+      cdpPortRangeStart: 18897,
+      cdpPortRangeEnd: 18996,
       cdpProtocol: "http",
       cdpHost: "127.0.0.1",
       cdpIsLoopback: true,

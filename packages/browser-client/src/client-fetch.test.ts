@@ -7,6 +7,7 @@ describe("fetchBrowserJson", () => {
     BROWSER_CLI_CONTROL_PORT: process.env.BROWSER_CLI_CONTROL_PORT,
     BROWSER_CLI_AUTH_TOKEN: process.env.BROWSER_CLI_AUTH_TOKEN,
     BROWSER_CLI_AUTH_PASSWORD: process.env.BROWSER_CLI_AUTH_PASSWORD,
+    BROWSER_CLI_MACHINE_AUTH_PATH: process.env.BROWSER_CLI_MACHINE_AUTH_PATH,
     BROWSER_CLI_CONFIG_PATH: process.env.BROWSER_CLI_CONFIG_PATH,
   };
 
@@ -15,6 +16,7 @@ describe("fetchBrowserJson", () => {
     process.env.BROWSER_CLI_CONTROL_PORT = "18888";
     process.env.BROWSER_CLI_AUTH_TOKEN = "loopback-token";
     delete process.env.BROWSER_CLI_AUTH_PASSWORD;
+    process.env.BROWSER_CLI_MACHINE_AUTH_PATH = "/tmp/browser-cli-client-fetch-no-auth.json";
   });
 
   afterEach(() => {
@@ -34,6 +36,12 @@ describe("fetchBrowserJson", () => {
       delete process.env.BROWSER_CLI_AUTH_PASSWORD;
     } else {
       process.env.BROWSER_CLI_AUTH_PASSWORD = originalEnv.BROWSER_CLI_AUTH_PASSWORD;
+    }
+
+    if (originalEnv.BROWSER_CLI_MACHINE_AUTH_PATH === undefined) {
+      delete process.env.BROWSER_CLI_MACHINE_AUTH_PATH;
+    } else {
+      process.env.BROWSER_CLI_MACHINE_AUTH_PATH = originalEnv.BROWSER_CLI_MACHINE_AUTH_PATH;
     }
 
     if (originalEnv.BROWSER_CLI_CONFIG_PATH === undefined) {

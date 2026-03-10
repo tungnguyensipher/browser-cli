@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "bun:test";
 import { loadRuntimeConfig, resolveRuntimeConfigPath, resolveRuntimeConfigFromEnv } from "../src/runtime-config.js";
+import { resolveBrowserConfig } from "../src/config.js";
 
 const tempDirs: string[] = [];
 
@@ -24,6 +25,12 @@ afterEach(() => {
 describe("runtime config", () => {
   it("resolves the default local config path", () => {
     expect(resolveRuntimeConfigPath({}, "/tmp/browser-cli")).toBe("/tmp/browser-cli/browser-cli.config.json");
+  });
+
+  it("defaults the browser control port to 18888 when unset", () => {
+    const resolved = resolveBrowserConfig(undefined, {});
+
+    expect(resolved.controlPort).toBe(18888);
   });
 
   it("loads a local config file and lets env override top-level and nested browser values", () => {

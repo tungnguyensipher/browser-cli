@@ -14,7 +14,7 @@ import {
 } from "./constants.js";
 import { CDP_PORT_RANGE_START, getUsedPorts } from "./profiles.js";
 
-const DEFAULT_BROWSER_CONTROL_PORT = 18791;
+const DEFAULT_BROWSER_CONTROL_PORT = 18888;
 const DEFAULT_BROWSER_CDP_PORT_RANGE_END = 18899;
 
 function deriveDefaultBrowserCdpPortRange(browserControlPort: number): { start: number; end: number } {
