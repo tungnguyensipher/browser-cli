@@ -1,4 +1,4 @@
-const PORT_GUIDANCE = 'Use gateway port + 3 (for gateway 18789, relay is 18792).'
+const PORT_GUIDANCE = 'Default relay port is 18889.'
 
 function hasCdpVersionShape(data) {
   return !!data && typeof data === 'object' && 'Browser' in data && 'Protocol-Version' in data
@@ -52,6 +52,6 @@ export function classifyRelayCheckException(err, port) {
 
   return {
     kind: 'error',
-    message: `Relay not reachable/authenticated at http://127.0.0.1:${port}/. Start OpenClaw browser relay and verify token.`,
+    message: `Relay not reachable/authenticated at http://127.0.0.1:${port}/. Start the AIBrowser local relay and verify the token.`,
   }
 }

@@ -1,16 +1,16 @@
-# OpenClaw Chrome Extension (Browser Relay)
+# AIBrowser Chrome Extension
 
-Purpose: attach OpenClaw to an existing Chrome tab so the Gateway can automate it (via the local CDP relay server).
+Purpose: attach AIBrowser to an existing Chrome tab so the local relay can automate it through Chrome DevTools Protocol.
 
 ## Dev / load unpacked
 
-1. Build/run OpenClaw Gateway with browser control enabled.
-2. Ensure the relay server is reachable at `http://127.0.0.1:18792/` (default).
+1. Start the AIBrowser local relay or browser service on this machine.
+2. Ensure the relay server is reachable at `http://127.0.0.1:18889/` (default).
 3. Install the extension to a stable path:
 
    ```bash
-   openclaw browser extension install
-   openclaw browser extension path
+   aibrowser extension install
+   aibrowser extension path
    ```
 
 4. Chrome → `chrome://extensions` → enable “Developer mode”.
@@ -19,5 +19,6 @@ Purpose: attach OpenClaw to an existing Chrome tab so the Gateway can automate i
 
 ## Options
 
-- `Relay port`: defaults to `18792`.
-- `Gateway token`: required. Set this to `gateway.auth.token` (or `OPENCLAW_GATEWAY_TOKEN`).
+- `Relay port`: defaults to `18889`.
+- `Relay token`: required. Usually this should match `AIBROWSER_AUTH_TOKEN`.
+  Compatibility env vars `OPENCLAW_GATEWAY_TOKEN` and `CLAWDBOT_GATEWAY_TOKEN` also work.
