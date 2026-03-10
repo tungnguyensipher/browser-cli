@@ -7,6 +7,7 @@ function createDeps() {
   const writeCalls: Array<{ filePath: string; content: string }> = [];
   const copyCalls: Array<{ from: string; to: string }> = [];
   const rmCalls: Array<{ targetPath: string; recursive: boolean; force: boolean }> = [];
+  const writeAuthCalls: Array<{ auth: Record<string, string>; homeDir?: string }> = [];
   const runResponses = new Map<string, { code: number; stdout: string; stderr: string }>();
 
   return {
@@ -15,6 +16,7 @@ function createDeps() {
     writeCalls,
     copyCalls,
     rmCalls,
+    writeAuthCalls,
     runResponses,
     deps: {
       mkdir: async (dirPath: string) => {
@@ -32,6 +34,14 @@ function createDeps() {
           recursive: options.recursive ?? false,
           force: options.force ?? false,
         });
+      },
+      readAuth: () => ({}),
+      writeAuth: async (
+        auth: Record<string, string>,
+        _env?: Record<string, string>,
+        homeDir?: string,
+      ) => {
+        writeAuthCalls.push({ auth, homeDir });
       },
       run: async (command: string, args: string[]) => {
         execCalls.push({ command, args });
@@ -56,7 +66,7 @@ describe("browser service commands", () => {
 
   it("installs a launchd user service by writing a plist and bootstrapping it", async () => {
     const { createBrowserServiceController } = await import("./browser-cli-service.js");
-    const { deps, execCalls, mkdirCalls, writeCalls } = createDeps();
+    const { deps, execCalls, mkdirCalls, writeAuthCalls, writeCalls } = createDeps();
     const controller = createBrowserServiceController(deps);
 
     const result = await controller.install({
@@ -80,6 +90,8 @@ describe("browser service commands", () => {
       "/Users/tester/Library/LaunchAgents/com.browsercli.browser-clid.plist",
     );
     expect(writeCalls[0]?.content).toContain("com.browsercli.browser-clid");
+    expect(writeCalls[0]?.content).toContain("<string>/Users/tester/.browser-cli</string>");
+    expect(writeAuthCalls).toEqual([{ auth: { token: "smoke-token" }, homeDir: "/Users/tester" }]);
     expect(execCalls).toEqual([
       {
         command: "launchctl",
@@ -90,6 +102,32 @@ describe("browser service commands", () => {
         ],
       },
     ]);
+  });
+
+  it("generates a new auth token during install when none is provided", async () => {
+    const { createBrowserServiceController } = await import("./browser-cli-service.js");
+    const { deps, writeAuthCalls } = createDeps();
+    const controller = createBrowserServiceController(deps);
+
+    const result = await controller.install({
+      platform: "launchd",
+      homeDir: "/Users/tester",
+      daemonCommand: {
+        command: "/opt/homebrew/bin/bun",
+        args: ["run", "/repo/packages/browser-cli/src/browser-clid.ts", "run"],
+        displayCommand: "browser-clid run",
+      },
+      env: {
+        BROWSER_CLI_CONTROL_PORT: "18888",
+      },
+      workingDirectory: "/repo",
+    });
+
+    expect(result.platform).toBe("launchd");
+    expect(result.authWritten).toBe(true);
+    expect(writeAuthCalls).toHaveLength(1);
+    expect(writeAuthCalls[0]?.homeDir).toBe("/Users/tester");
+    expect(writeAuthCalls[0]?.auth.token).toMatch(/^[A-Za-z0-9_-]{20,}$/);
   });
 
   it("installs a systemd user service by writing a unit and enabling it", async () => {
@@ -113,7 +151,9 @@ describe("browser service commands", () => {
 
     expect(result.platform).toBe("systemd");
     expect(mkdirCalls).toContain("/home/tester/.config/systemd/user");
+    expect(mkdirCalls).toContain("/home/tester/.browser-cli");
     expect(writeCalls[0]?.filePath).toBe("/home/tester/.config/systemd/user/browser-cli.service");
+    expect(writeCalls[0]?.content).toContain("WorkingDirectory=/home/tester/.browser-cli");
     expect(writeCalls[0]?.content).toContain("ExecStart=/usr/bin/bun run /repo/packages/browser-cli/src/browser-clid.ts run");
     expect(execCalls).toEqual([
       { command: "systemctl", args: ["--user", "daemon-reload"] },
@@ -128,6 +168,7 @@ describe("browser service commands", () => {
 
     const result = await controller.install({
       platform: "windows",
+      homeDir: "C:\\Users\\tester",
       localAppDataDir: "C:\\Users\\tester\\AppData\\Local",
       daemonCommand: {
         command: "C:\\Program Files\\Bun\\bun.exe",
@@ -143,6 +184,7 @@ describe("browser service commands", () => {
 
     expect(result.platform).toBe("windows");
     expect(mkdirCalls).toContain("C:\\Users\\tester\\AppData\\Local\\browser-cli\\service");
+    expect(mkdirCalls).toContain("C:\\Users\\tester\\.browser-cli");
     expect(copyCalls).toEqual([
       {
         from: "D:\\tools\\winsw.exe",
@@ -152,6 +194,7 @@ describe("browser service commands", () => {
     expect(writeCalls[0]?.filePath).toBe(
       "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli.xml",
     );
+    expect(writeCalls[0]?.content).toContain("<workingdirectory>C:\\Users\\tester\\.browser-cli</workingdirectory>");
     expect(execCalls).toEqual([
       {
         command: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli-service.exe",
@@ -430,5 +473,54 @@ describe("resolveBundledWinSwPath", () => {
 
     Object.defineProperty(process, "platform", originalPlatform!);
     Object.defineProperty(process, "arch", originalArch!);
+  });
+});
+
+describe("resolveRuntimeExecutable", () => {
+  it("resolves node to a full path on macOS/Linux shells", async () => {
+    const { resolveRuntimeExecutable } = await import("./browser-cli-service.js");
+    const execCalls: Array<{ command: string; args: string[] }> = [];
+
+    const resolved = await resolveRuntimeExecutable(undefined, {
+      run: async (command, args) => {
+        execCalls.push({ command, args });
+        return {
+          code: 0,
+          stdout: "/usr/local/bin/node\n",
+          stderr: "",
+        };
+      },
+    });
+
+    expect(resolved).toBe("/usr/local/bin/node");
+    expect(execCalls).toEqual([{ command: "which", args: ["node"] }]);
+  });
+
+  it("resolves bun to a full path on Windows shells", async () => {
+    const { resolveRuntimeExecutable } = await import("./browser-cli-service.js");
+    const execCalls: Array<{ command: string; args: string[] }> = [];
+    const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform");
+
+    Object.defineProperty(process, "platform", {
+      value: "win32",
+    });
+
+    try {
+      const resolved = await resolveRuntimeExecutable("bun", {
+        run: async (command, args) => {
+          execCalls.push({ command, args });
+          return {
+            code: 0,
+            stdout: "C:\\Users\\tester\\.bun\\bin\\bun.exe\r\n",
+            stderr: "",
+          };
+        },
+      });
+
+      expect(resolved).toBe("C:\\Users\\tester\\.bun\\bin\\bun.exe");
+      expect(execCalls).toEqual([{ command: "where", args: ["bun"] }]);
+    } finally {
+      Object.defineProperty(process, "platform", originalPlatform!);
+    }
   });
 });

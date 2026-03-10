@@ -1,10 +1,16 @@
 import fs from "node:fs/promises";
+import crypto from "node:crypto";
+import os from "node:os";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import type { Command } from "commander";
-import { writeMachineBrowserControlAuth } from "@aibrowser/browser-shared";
+import {
+  readMachineBrowserControlAuth,
+  writeMachineBrowserControlAuth,
+  type BrowserControlAuth,
+} from "@aibrowser/browser-shared";
 import { danger, info } from "./globals.js";
 import { defaultRuntime } from "./runtime.js";
 import type { BrowserParentOpts } from "./browser-cli-shared.js";
@@ -59,6 +65,8 @@ type BrowserServiceDeps = {
   writeFile: (filePath: string, content: string) => Promise<void>;
   copyFile: (from: string, to: string) => Promise<void>;
   rm: (targetPath: string, options: { recursive?: boolean; force?: boolean }) => Promise<void>;
+  readAuth: (env?: NodeJS.ProcessEnv, homeDir?: string) => BrowserControlAuth;
+  writeAuth: (auth: BrowserControlAuth, env?: NodeJS.ProcessEnv, homeDir?: string) => Promise<void> | void;
   run: (command: string, args: string[]) => Promise<CommandResult>;
   getUid: () => number;
 };
@@ -102,6 +110,10 @@ function defaultDeps(): BrowserServiceDeps {
     },
     rm: async (targetPath, options) => {
       await fs.rm(targetPath, { recursive: options.recursive, force: options.force });
+    },
+    readAuth: (env, homeDir) => readMachineBrowserControlAuth(env, homeDir),
+    writeAuth: async (auth, env, homeDir) => {
+      writeMachineBrowserControlAuth(auth, env, homeDir);
     },
     run: async (command, args) => {
       try {
@@ -175,6 +187,13 @@ function resolveInstallDaemonCommand(
   );
 }
 
+function resolveServiceWorkingDirectory(platform: ServicePlatform, homeDir?: string): string {
+  const resolvedHomeDir = homeDir ?? os.homedir();
+  return platform === "windows"
+    ? path.win32.join(resolvedHomeDir, ".browser-cli")
+    : path.join(resolvedHomeDir, ".browser-cli");
+}
+
 function assertCommandSucceeded(result: CommandResult, action: string) {
   if (result.code === 0) {
     return;
@@ -209,18 +228,25 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
         localAppDataDir: params.localAppDataDir,
       });
 
-      // Resolve runtime executable (node/bun/custom path)
-      const runtimeExecutable = await resolveRuntimeExecutable(params.runtime, deps);
-
-      const daemon = resolveInstallDaemonCommand(params, runtimeExecutable);
-      const { env, authToken } = resolveManagedEnv(params.env);
+      const daemon = params.daemonCommand
+        ? params.daemonCommand
+        : resolveInstallDaemonCommand(params, await resolveRuntimeExecutable(params.runtime, deps));
+      const { env, authToken: explicitAuthToken } = resolveManagedEnv(params.env);
+      const existingAuth = deps.readAuth(params.env as NodeJS.ProcessEnv | undefined, params.homeDir);
+      const resolvedAuthToken = explicitAuthToken || existingAuth.token?.trim() || crypto.randomBytes(24).toString("base64url");
+      const workingDirectory = resolveServiceWorkingDirectory(platform, params.homeDir);
 
       // Write auth token to machine auth file instead of embedding in service config
-      let authWritten = false;
-      if (authToken) {
-        writeMachineBrowserControlAuth({ token: authToken });
-        authWritten = true;
-      }
+      await deps.writeAuth(
+        {
+          ...existingAuth,
+          token: resolvedAuthToken,
+        },
+        params.env as NodeJS.ProcessEnv | undefined,
+        params.homeDir,
+      );
+      const authWritten = true;
+      await deps.mkdir(workingDirectory);
 
       if (platform === "launchd") {
         if (!paths.serviceDir || !paths.serviceFile) {
@@ -234,7 +260,7 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
             label: "com.browsercli.browser-clid",
             command: daemon.command,
             args: daemon.args,
-            workingDirectory: params.workingDirectory,
+            workingDirectory,
             env,
             stdoutPath: `${paths.logsDir}/stdout.log`,
             stderrPath: `${paths.logsDir}/stderr.log`,
@@ -260,7 +286,7 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
             description: "Browser CLI Service",
             command: daemon.command,
             args: daemon.args,
-            workingDirectory: params.workingDirectory,
+            workingDirectory,
             env,
           }),
         );
@@ -298,7 +324,7 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
           description: "Browser CLI background service",
           command: daemon.command,
           args: daemon.args,
-          workingDirectory: params.workingDirectory,
+          workingDirectory,
           env,
           logsDir: paths.logsDir,
         }),
@@ -503,30 +529,49 @@ function resolveDefaultDaemonEntry(): string {
   return tsPath;
 }
 
+async function resolveRuntimeBinaryOnPath(
+  commandName: string,
+  deps: Pick<BrowserServiceDeps, "run">,
+): Promise<string | null> {
+  const lookupCommand = process.platform === "win32" ? "where" : "which";
+  const result = await deps.run(lookupCommand, [commandName]);
+  if (result.code !== 0) {
+    return null;
+  }
+
+  const firstMatch = result.stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find(Boolean);
+
+  return firstMatch ?? null;
+}
+
 /**
  * Resolve runtime executable path.
- * - If runtime is undefined/null/"node": returns "node" (default, for service use)
- * - If runtime is "bun": auto-detects bun path from shell
+ * - If runtime is undefined/null/"node": auto-detect node path from the current shell, else fall back to "node"
+ * - If runtime is "bun": auto-detect bun path from the current shell
  * - If runtime is a path: returns as-is
  */
-async function resolveRuntimeExecutable(
+export async function resolveRuntimeExecutable(
   runtime: string | undefined,
   deps: Pick<BrowserServiceDeps, "run">,
 ): Promise<string> {
-  // Default: node (for services - uses shebang #!/usr/bin/env node)
   if (!runtime || runtime === "node") {
-    return "node";
+    return (await resolveRuntimeBinaryOnPath("node", deps)) ?? "node";
   }
 
-  // Auto-detect bun path from shell
   if (runtime === "bun") {
-    const result = await deps.run("which", ["bun"]);
-    if (result.code === 0 && result.stdout.trim()) {
-      return result.stdout.trim();
+    const shellResolved = await resolveRuntimeBinaryOnPath("bun", deps);
+    if (shellResolved) {
+      return shellResolved;
     }
-    // Fallback to common bun location
+
     const homeDir = process.env.HOME ?? process.env.USERPROFILE;
     if (homeDir) {
+      if (process.platform === "win32") {
+        return path.win32.join(homeDir, ".bun", "bin", "bun.exe");
+      }
       return `${homeDir}/.bun/bin/bun`;
     }
     return "bun";

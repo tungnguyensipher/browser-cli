@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { registerBrowserAuthCommands } from "./browser-cli-auth.js";
 import { resolveBrowserCliParentOpts } from "./browser-cli-options.js";
 import { registerBrowserActionInputCommands } from "./browser-cli-actions-input.js";
 import { registerBrowserActionObserveCommands } from "./browser-cli-actions-observe.js";
@@ -23,6 +24,7 @@ export function registerBrowserCli(program: Command) {
 
   registerBrowserManageCommands(program, parentOpts);
   registerBrowserServiceCommands(program, parentOpts);
+  registerBrowserAuthCommands(program, parentOpts);
   registerBrowserExtensionCommands(program, parentOpts);
   registerBrowserInspectCommands(program, parentOpts);
   registerBrowserActionInputCommands(program, parentOpts);

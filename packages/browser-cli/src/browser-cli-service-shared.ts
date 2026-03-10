@@ -104,9 +104,11 @@ export function resolveDaemonCommand(params?: {
     throw new Error("daemonEntry is required when daemonBin is not provided");
   }
 
+  const runtimeExecutable = params?.runtimeExecutable?.trim() || process.execPath;
+
   return {
-    command: params?.runtimeExecutable?.trim() || process.execPath,
-    args: ["run", daemonEntry, "run"],
+    command: runtimeExecutable,
+    args: [daemonEntry, "run"],
     displayCommand: "browser-clid run",
   };
 }

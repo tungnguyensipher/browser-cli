@@ -27,6 +27,7 @@ describe("browser cli help", () => {
     expect(stdout).toContain("navigate");
     expect(stdout).toContain("act");
     expect(stdout).toContain("service");
+    expect(stdout).toContain("auth");
     expect(stdout).toContain("extension");
   });
 
@@ -68,5 +69,12 @@ describe("browser cli help", () => {
     expect(serviceStdout).toContain("install");
     expect(serviceStdout).toContain("status");
     expect(serviceStdout).toContain("restart");
+
+    const authHelp = runCliHelp(["auth"]);
+    const authStdout = new TextDecoder().decode(authHelp.stdout);
+    expect(authHelp.exitCode).toBe(0);
+    expect(authStdout).toContain("regenerate");
+    expect(authStdout).toContain("set");
+    expect(authStdout).toContain("copy");
   });
 });

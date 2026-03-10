@@ -67,7 +67,29 @@ describe("browser service shared helpers", () => {
     });
     expect(daemon).toEqual({
       command: "/opt/homebrew/bin/bun",
-      args: ["run", daemonEntry, "run"],
+      args: [daemonEntry, "run"],
+      displayCommand: `browser-clid run`,
+    });
+
+    const nodeDaemon = resolveDaemonCommand({
+      runtimeExecutable: "/usr/local/bin/node",
+      daemonEntry,
+      mode: "source",
+    });
+    expect(nodeDaemon).toEqual({
+      command: "/usr/local/bin/node",
+      args: [daemonEntry, "run"],
+      displayCommand: `browser-clid run`,
+    });
+
+    const windowsNodeDaemon = resolveDaemonCommand({
+      runtimeExecutable: "C:\\Program Files\\nodejs\\node.exe",
+      daemonEntry: "C:\\repo\\packages\\browser-cli\\dist\\browser-clid.mjs",
+      mode: "source",
+    });
+    expect(windowsNodeDaemon).toEqual({
+      command: "C:\\Program Files\\nodejs\\node.exe",
+      args: ["C:\\repo\\packages\\browser-cli\\dist\\browser-clid.mjs", "run"],
       displayCommand: `browser-clid run`,
     });
   });
