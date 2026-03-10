@@ -30,7 +30,7 @@ function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
-function resolveWorkspacePackageJsonPaths(rootDir = process.cwd()) {
+function resolveWorkspaceVersionFilePaths(rootDir = process.cwd()) {
   const rootPackageJson = path.join(rootDir, "package.json");
   const packagesDir = path.join(rootDir, "packages");
   const paths = [rootPackageJson];
@@ -44,6 +44,12 @@ function resolveWorkspacePackageJsonPaths(rootDir = process.cwd()) {
     const packageJsonPath = path.join(packagesDir, entry.name, "package.json");
     if (fs.existsSync(packageJsonPath)) {
       paths.push(packageJsonPath);
+    }
+    if (entry.name === "chrome-extension") {
+      const manifestPath = path.join(packagesDir, entry.name, "manifest.json");
+      if (fs.existsSync(manifestPath)) {
+        paths.push(manifestPath);
+      }
     }
   }
   return paths;
@@ -78,28 +84,28 @@ function bumpVersion(version, kind) {
 
 function syncWorkspaceVersion(version, rootDir = process.cwd()) {
   assertVersionString(version);
-  const packageJsonPaths = resolveWorkspacePackageJsonPaths(rootDir);
-  for (const packageJsonPath of packageJsonPaths) {
-    const pkg = readJson(packageJsonPath);
+  const versionFilePaths = resolveWorkspaceVersionFilePaths(rootDir);
+  for (const versionFilePath of versionFilePaths) {
+    const pkg = readJson(versionFilePath);
     if (pkg.version === version) {
       continue;
     }
     pkg.version = version;
-    writeJson(packageJsonPath, pkg);
-    console.log(`Updated ${path.relative(rootDir, packageJsonPath)} -> ${version}`);
+    writeJson(versionFilePath, pkg);
+    console.log(`Updated ${path.relative(rootDir, versionFilePath)} -> ${version}`);
   }
 }
 
 function checkWorkspaceVersions(rootDir = process.cwd()) {
-  const packageJsonPaths = resolveWorkspacePackageJsonPaths(rootDir);
+  const versionFilePaths = resolveWorkspaceVersionFilePaths(rootDir);
   const rootVersion = readJson(path.join(rootDir, "package.json")).version;
   assertVersionString(rootVersion);
   let ok = true;
-  for (const packageJsonPath of packageJsonPaths.slice(1)) {
-    const pkg = readJson(packageJsonPath);
+  for (const versionFilePath of versionFilePaths.slice(1)) {
+    const pkg = readJson(versionFilePath);
     if (pkg.version !== rootVersion) {
       console.error(
-        `${path.relative(rootDir, packageJsonPath)} has version ${pkg.version ?? "<missing>"} but root package.json is ${rootVersion}`,
+        `${path.relative(rootDir, versionFilePath)} has version ${pkg.version ?? "<missing>"} but root package.json is ${rootVersion}`,
       );
       ok = false;
     }
