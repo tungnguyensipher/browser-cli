@@ -457,6 +457,22 @@ async function findPageByTargetId(
   const isExtensionRelay = cdpUrl
     ? await isExtensionRelayCdpEndpoint(cdpUrl).catch(() => false)
     : false;
+  let resolvedViaCdp = false;
+  const resolvedPages: Array<{ url: string; targetId: string | null }> = [];
+  for (const page of pages) {
+    let tid: string | null = null;
+    try {
+      tid = await pageTargetId(page);
+      resolvedViaCdp = true;
+    } catch {
+      tid = null;
+    }
+    resolvedPages.push({ url: page.url(), targetId: tid });
+    if (tid && tid === targetId) {
+      return page;
+    }
+  }
+
   if (cdpUrl && isExtensionRelay) {
     try {
       const matched = await findPageByTargetIdViaTargetList(pages, targetId, cdpUrl);
@@ -466,22 +482,9 @@ async function findPageByTargetId(
     } catch {
       // Ignore fetch errors and fall through to best-effort single-page fallback.
     }
-    return pages.length === 1 ? (pages[0] ?? null) : null;
+    return !resolvedViaCdp && pages.length === 1 ? (pages[0] ?? null) : null;
   }
 
-  let resolvedViaCdp = false;
-  for (const page of pages) {
-    let tid: string | null = null;
-    try {
-      tid = await pageTargetId(page);
-      resolvedViaCdp = true;
-    } catch {
-      tid = null;
-    }
-    if (tid && tid === targetId) {
-      return page;
-    }
-  }
   if (cdpUrl) {
     try {
       return await findPageByTargetIdViaTargetList(pages, targetId, cdpUrl);
