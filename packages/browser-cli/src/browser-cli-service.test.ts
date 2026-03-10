@@ -419,7 +419,8 @@ describe("resolveBundledWinSwPath", () => {
 
     Object.defineProperty(process, "platform", { value: "win32" });
 
-    for (const arch of ["x64", "x86", "arm64"]) {
+    // Note: arm64 not bundled (WinSW v2 doesn't provide arm64 builds)
+    for (const arch of ["x64", "x86"]) {
       Object.defineProperty(process, "arch", { value: arch });
 
       const result = resolveBundledWinSwPath();
