@@ -55,8 +55,8 @@ describe("chrome extension relay server", () => {
   let previousGatewayToken: string | undefined;
 
   beforeEach(() => {
-    previousGatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN;
-    process.env.OPENCLAW_GATEWAY_TOKEN = TEST_GATEWAY_TOKEN;
+    previousGatewayToken = process.env.BROWSER_CLI_AUTH_TOKEN;
+    process.env.BROWSER_CLI_AUTH_TOKEN = TEST_GATEWAY_TOKEN;
   });
 
   afterEach(async () => {
@@ -65,9 +65,9 @@ describe("chrome extension relay server", () => {
       cdpUrl = "";
     }
     if (previousGatewayToken === undefined) {
-      delete process.env.OPENCLAW_GATEWAY_TOKEN;
+      delete process.env.BROWSER_CLI_AUTH_TOKEN;
     } else {
-      process.env.OPENCLAW_GATEWAY_TOKEN = previousGatewayToken;
+      process.env.BROWSER_CLI_AUTH_TOKEN = previousGatewayToken;
     }
   });
 

@@ -12,7 +12,7 @@ export async function runDaemon(): Promise<void> {
     throw new Error("Browser control service is disabled or failed to start.");
   }
 
-  console.log(`aibrowserd listening on http://127.0.0.1:${state.port}/`);
+  console.log(`browser-clid listening on http://127.0.0.1:${state.port}/`);
   await new Promise<void>((resolve) => {
     let settled = false;
 
@@ -39,7 +39,7 @@ export async function runDaemon(): Promise<void> {
 
 export function createDaemonProgram(): Command {
   const program = new Command();
-  program.name("aibrowserd").description("Foreground daemon for aibrowser service managers");
+  program.name("browser-clid").description("Foreground daemon for browser-cli service managers");
   program
     .command("run")
     .description("Run the browser control service in the foreground")

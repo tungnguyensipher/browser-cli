@@ -52,6 +52,6 @@ export function classifyRelayCheckException(err, port) {
 
   return {
     kind: 'error',
-    message: `Relay not reachable/authenticated at http://127.0.0.1:${port}/. Start the AIBrowser local relay and verify the token.`,
+    message: `Relay not reachable/authenticated at http://127.0.0.1:${port}/. Start the Browser CLI local relay and verify the token.`,
   }
 }

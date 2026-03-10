@@ -4,42 +4,42 @@ import { fetchBrowserJson } from "./client-fetch.js";
 
 describe("fetchBrowserJson", () => {
   const originalEnv = {
-    AIBROWSER_CONTROL_PORT: process.env.AIBROWSER_CONTROL_PORT,
-    AIBROWSER_AUTH_TOKEN: process.env.AIBROWSER_AUTH_TOKEN,
-    AIBROWSER_AUTH_PASSWORD: process.env.AIBROWSER_AUTH_PASSWORD,
-    AIBROWSER_CONFIG_PATH: process.env.AIBROWSER_CONFIG_PATH,
+    BROWSER_CLI_CONTROL_PORT: process.env.BROWSER_CLI_CONTROL_PORT,
+    BROWSER_CLI_AUTH_TOKEN: process.env.BROWSER_CLI_AUTH_TOKEN,
+    BROWSER_CLI_AUTH_PASSWORD: process.env.BROWSER_CLI_AUTH_PASSWORD,
+    BROWSER_CLI_CONFIG_PATH: process.env.BROWSER_CLI_CONFIG_PATH,
   };
 
   beforeEach(() => {
-    delete process.env.AIBROWSER_CONFIG_PATH;
-    process.env.AIBROWSER_CONTROL_PORT = "18888";
-    process.env.AIBROWSER_AUTH_TOKEN = "loopback-token";
-    delete process.env.AIBROWSER_AUTH_PASSWORD;
+    delete process.env.BROWSER_CLI_CONFIG_PATH;
+    process.env.BROWSER_CLI_CONTROL_PORT = "18888";
+    process.env.BROWSER_CLI_AUTH_TOKEN = "loopback-token";
+    delete process.env.BROWSER_CLI_AUTH_PASSWORD;
   });
 
   afterEach(() => {
-    if (originalEnv.AIBROWSER_CONTROL_PORT === undefined) {
-      delete process.env.AIBROWSER_CONTROL_PORT;
+    if (originalEnv.BROWSER_CLI_CONTROL_PORT === undefined) {
+      delete process.env.BROWSER_CLI_CONTROL_PORT;
     } else {
-      process.env.AIBROWSER_CONTROL_PORT = originalEnv.AIBROWSER_CONTROL_PORT;
+      process.env.BROWSER_CLI_CONTROL_PORT = originalEnv.BROWSER_CLI_CONTROL_PORT;
     }
 
-    if (originalEnv.AIBROWSER_AUTH_TOKEN === undefined) {
-      delete process.env.AIBROWSER_AUTH_TOKEN;
+    if (originalEnv.BROWSER_CLI_AUTH_TOKEN === undefined) {
+      delete process.env.BROWSER_CLI_AUTH_TOKEN;
     } else {
-      process.env.AIBROWSER_AUTH_TOKEN = originalEnv.AIBROWSER_AUTH_TOKEN;
+      process.env.BROWSER_CLI_AUTH_TOKEN = originalEnv.BROWSER_CLI_AUTH_TOKEN;
     }
 
-    if (originalEnv.AIBROWSER_AUTH_PASSWORD === undefined) {
-      delete process.env.AIBROWSER_AUTH_PASSWORD;
+    if (originalEnv.BROWSER_CLI_AUTH_PASSWORD === undefined) {
+      delete process.env.BROWSER_CLI_AUTH_PASSWORD;
     } else {
-      process.env.AIBROWSER_AUTH_PASSWORD = originalEnv.AIBROWSER_AUTH_PASSWORD;
+      process.env.BROWSER_CLI_AUTH_PASSWORD = originalEnv.BROWSER_CLI_AUTH_PASSWORD;
     }
 
-    if (originalEnv.AIBROWSER_CONFIG_PATH === undefined) {
-      delete process.env.AIBROWSER_CONFIG_PATH;
+    if (originalEnv.BROWSER_CLI_CONFIG_PATH === undefined) {
+      delete process.env.BROWSER_CLI_CONFIG_PATH;
     } else {
-      process.env.AIBROWSER_CONFIG_PATH = originalEnv.AIBROWSER_CONFIG_PATH;
+      process.env.BROWSER_CLI_CONFIG_PATH = originalEnv.BROWSER_CLI_CONFIG_PATH;
     }
 
     mock.restore();
@@ -133,9 +133,8 @@ describe("fetchBrowserJson", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("does not inject legacy gateway auth when loopback auth fallback is suppressed", async () => {
-    delete process.env.AIBROWSER_AUTH_TOKEN;
-    process.env.OPENCLAW_GATEWAY_TOKEN = "legacy-token";
+  it("does not inject auth when Browser CLI loopback auth is unset and fallback is suppressed", async () => {
+    delete process.env.BROWSER_CLI_AUTH_TOKEN;
 
     const fetchMock = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
@@ -148,7 +147,6 @@ describe("fetchBrowserJson", () => {
     globalThis.fetch = fetchMock as typeof fetch;
 
     await fetchBrowserJson<{ ok: true; tabs: [] }>("/tabs", {
-      // Added for CLI-only auth resolution where OPENCLAW_GATEWAY_TOKEN should not auto-fill.
       suppressLoopbackAuthFallback: true,
     });
 

@@ -67,11 +67,11 @@ export function resolveMachineBrowserControlAuthPath(
   env: NodeJS.ProcessEnv = process.env,
   homeDir = os.homedir(),
 ): string {
-  const explicit = trimToUndefined(env.AIBROWSER_MACHINE_AUTH_PATH);
+  const explicit = trimToUndefined(env.BROWSER_CLI_MACHINE_AUTH_PATH);
   if (explicit) {
     return path.resolve(homeDir, explicit);
   }
-  return path.join(homeDir, ".aibrowser", "auth.json");
+  return path.join(homeDir, ".browser-cli", "auth.json");
 }
 
 export function readMachineBrowserControlAuth(
@@ -113,15 +113,11 @@ export function resolveBrowserControlAuth(
   const runtimeConfig = cfg ?? loadRuntimeConfig(env);
   const machineAuth = readMachineBrowserControlAuth(env);
   const token =
-    trimToUndefined(env.AIBROWSER_AUTH_TOKEN) ??
+    trimToUndefined(env.BROWSER_CLI_AUTH_TOKEN) ??
     trimToUndefined(runtimeConfig.auth?.token) ??
-    trimToUndefined(machineAuth.token) ??
-    (opts?.allowLegacyGatewayTokenFallback === false
-      ? undefined
-      : trimToUndefined(env.OPENCLAW_GATEWAY_TOKEN) ??
-        trimToUndefined(env.CLAWDBOT_GATEWAY_TOKEN));
+    trimToUndefined(machineAuth.token);
   const password =
-    trimToUndefined(env.AIBROWSER_AUTH_PASSWORD) ??
+    trimToUndefined(env.BROWSER_CLI_AUTH_PASSWORD) ??
     trimToUndefined(runtimeConfig.auth?.password) ??
     trimToUndefined(machineAuth.password) ??
     undefined;

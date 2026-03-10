@@ -163,11 +163,11 @@ export function resolveRuntimeConfigPath(
   env: NodeJS.ProcessEnv = process.env,
   cwd = process.cwd(),
 ): string {
-  const explicit = trimToUndefined(env.AIBROWSER_CONFIG_PATH);
+  const explicit = trimToUndefined(env.BROWSER_CLI_CONFIG_PATH);
   if (explicit) {
     return path.resolve(cwd, explicit);
   }
-  return path.join(cwd, "aibrowser.config.json");
+  return path.join(cwd, "browser-cli.config.json");
 }
 
 export function readRuntimeConfigFile(
@@ -189,49 +189,46 @@ export function resolveRuntimeConfigFromEnv(
   env: NodeJS.ProcessEnv = process.env,
 ): StandaloneRuntimeConfig {
   const browserProfiles = recordFromJsonEnv<Record<string, BrowserProfileConfig>>(
-    env.AIBROWSER_BROWSER_PROFILES,
+    env.BROWSER_CLI_BROWSER_PROFILES,
   );
   const browser = mergeDefined<BrowserConfig>(undefined, {
-    enabled: booleanFromEnv(env.AIBROWSER_BROWSER_ENABLED),
-    evaluateEnabled: booleanFromEnv(env.AIBROWSER_EVALUATE_ENABLED),
-    controlPort: numberFromEnv(env.AIBROWSER_CONTROL_PORT),
-    cdpUrl: trimToUndefined(env.AIBROWSER_CDP_URL),
-    remoteCdpTimeoutMs: numberFromEnv(env.AIBROWSER_REMOTE_CDP_TIMEOUT_MS),
-    remoteCdpHandshakeTimeoutMs: numberFromEnv(env.AIBROWSER_REMOTE_CDP_HANDSHAKE_TIMEOUT_MS),
-    color: trimToUndefined(env.AIBROWSER_BROWSER_COLOR),
-    executablePath: trimToUndefined(env.AIBROWSER_EXECUTABLE_PATH),
-    headless: booleanFromEnv(env.AIBROWSER_HEADLESS),
-    noSandbox: booleanFromEnv(env.AIBROWSER_NO_SANDBOX),
-    attachOnly: booleanFromEnv(env.AIBROWSER_ATTACH_ONLY),
-    cdpPortRangeStart: numberFromEnv(env.AIBROWSER_CDP_PORT_RANGE_START),
-    defaultProfile: trimToUndefined(env.AIBROWSER_DEFAULT_PROFILE),
+    enabled: booleanFromEnv(env.BROWSER_CLI_BROWSER_ENABLED),
+    evaluateEnabled: booleanFromEnv(env.BROWSER_CLI_EVALUATE_ENABLED),
+    controlPort: numberFromEnv(env.BROWSER_CLI_CONTROL_PORT),
+    cdpUrl: trimToUndefined(env.BROWSER_CLI_CDP_URL),
+    remoteCdpTimeoutMs: numberFromEnv(env.BROWSER_CLI_REMOTE_CDP_TIMEOUT_MS),
+    remoteCdpHandshakeTimeoutMs: numberFromEnv(env.BROWSER_CLI_REMOTE_CDP_HANDSHAKE_TIMEOUT_MS),
+    color: trimToUndefined(env.BROWSER_CLI_BROWSER_COLOR),
+    executablePath: trimToUndefined(env.BROWSER_CLI_EXECUTABLE_PATH),
+    headless: booleanFromEnv(env.BROWSER_CLI_HEADLESS),
+    noSandbox: booleanFromEnv(env.BROWSER_CLI_NO_SANDBOX),
+    attachOnly: booleanFromEnv(env.BROWSER_CLI_ATTACH_ONLY),
+    cdpPortRangeStart: numberFromEnv(env.BROWSER_CLI_CDP_PORT_RANGE_START),
+    defaultProfile: trimToUndefined(env.BROWSER_CLI_DEFAULT_PROFILE),
     profiles: browserProfiles,
     ssrfPolicy:
       mergeDefined<BrowserSsrFPolicyConfig>(undefined, {
-        allowPrivateNetwork: booleanFromEnv(env.AIBROWSER_ALLOW_PRIVATE_NETWORK),
+        allowPrivateNetwork: booleanFromEnv(env.BROWSER_CLI_ALLOW_PRIVATE_NETWORK),
         dangerouslyAllowPrivateNetwork: booleanFromEnv(
-          env.AIBROWSER_DANGEROUSLY_ALLOW_PRIVATE_NETWORK,
+          env.BROWSER_CLI_DANGEROUSLY_ALLOW_PRIVATE_NETWORK,
         ),
         allowRfc2544BenchmarkRange: booleanFromEnv(
-          env.AIBROWSER_ALLOW_RFC2544_BENCHMARK_RANGE,
+          env.BROWSER_CLI_ALLOW_RFC2544_BENCHMARK_RANGE,
         ),
-        allowedHostnames: stringArrayFromEnv(env.AIBROWSER_ALLOWED_HOSTNAMES),
-        hostnameAllowlist: stringArrayFromEnv(env.AIBROWSER_HOSTNAME_ALLOWLIST),
+        allowedHostnames: stringArrayFromEnv(env.BROWSER_CLI_ALLOWED_HOSTNAMES),
+        hostnameAllowlist: stringArrayFromEnv(env.BROWSER_CLI_HOSTNAME_ALLOWLIST),
       }) ?? undefined,
-    extraArgs: stringArrayFromEnv(env.AIBROWSER_EXTRA_ARGS),
-    relayBindHost: trimToUndefined(env.AIBROWSER_RELAY_BIND_HOST),
+    extraArgs: stringArrayFromEnv(env.BROWSER_CLI_EXTRA_ARGS),
+    relayBindHost: trimToUndefined(env.BROWSER_CLI_RELAY_BIND_HOST),
   });
 
   return standaloneRuntimeConfigSchema.parse({
-    bindHost: trimToUndefined(env.AIBROWSER_BIND_HOST),
-    outputDir: trimToUndefined(env.AIBROWSER_OUTPUT_DIR),
-    mediaDir: trimToUndefined(env.AIBROWSER_MEDIA_DIR),
+    bindHost: trimToUndefined(env.BROWSER_CLI_BIND_HOST),
+    outputDir: trimToUndefined(env.BROWSER_CLI_OUTPUT_DIR),
+    mediaDir: trimToUndefined(env.BROWSER_CLI_MEDIA_DIR),
     auth: mergeDefined<RuntimeAuthConfig>(undefined, {
-      token:
-        trimToUndefined(env.AIBROWSER_AUTH_TOKEN) ??
-        trimToUndefined(env.OPENCLAW_GATEWAY_TOKEN) ??
-        trimToUndefined(env.CLAWDBOT_GATEWAY_TOKEN),
-      password: trimToUndefined(env.AIBROWSER_AUTH_PASSWORD),
+      token: trimToUndefined(env.BROWSER_CLI_AUTH_TOKEN),
+      password: trimToUndefined(env.BROWSER_CLI_AUTH_PASSWORD),
     }),
     browser,
   });

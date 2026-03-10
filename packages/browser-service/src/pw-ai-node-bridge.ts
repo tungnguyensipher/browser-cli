@@ -132,7 +132,7 @@ function createWorkerNotReadyError(message: string, state?: WorkerState): Error 
 }
 
 function resolveNodeExecutable(): string {
-  const configured = process.env.AIBROWSER_NODE_PATH?.trim();
+  const configured = process.env.BROWSER_CLI_NODE_PATH?.trim();
   return configured || "node";
 }
 

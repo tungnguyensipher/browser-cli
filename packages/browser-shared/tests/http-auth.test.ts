@@ -7,7 +7,7 @@ import { resolveBrowserControlAuth } from "../src/http-auth.js";
 const tempDirs: string[] = [];
 
 function createTempDir(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aibrowser-http-auth-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "browser-cli-http-auth-"));
   tempDirs.push(dir);
   return dir;
 }
@@ -30,7 +30,7 @@ describe("http auth", () => {
     const auth = resolveBrowserControlAuth(
       {},
       {
-        AIBROWSER_MACHINE_AUTH_PATH: machineAuthPath,
+        BROWSER_CLI_MACHINE_AUTH_PATH: machineAuthPath,
       },
       {
         allowLegacyGatewayTokenFallback: false,
@@ -40,7 +40,7 @@ describe("http auth", () => {
     expect(auth).toEqual({ token: "machine-token" });
   });
 
-  it("prefers AIBROWSER_AUTH_TOKEN over machine auth", () => {
+  it("prefers BROWSER_CLI_AUTH_TOKEN over machine auth", () => {
     const dir = createTempDir();
     const machineAuthPath = path.join(dir, "auth.json");
     fs.writeFileSync(machineAuthPath, JSON.stringify({ token: "machine-token" }), "utf8");
@@ -48,8 +48,8 @@ describe("http auth", () => {
     const auth = resolveBrowserControlAuth(
       {},
       {
-        AIBROWSER_AUTH_TOKEN: "env-token",
-        AIBROWSER_MACHINE_AUTH_PATH: machineAuthPath,
+        BROWSER_CLI_AUTH_TOKEN: "env-token",
+        BROWSER_CLI_MACHINE_AUTH_PATH: machineAuthPath,
       },
       {
         allowLegacyGatewayTokenFallback: false,

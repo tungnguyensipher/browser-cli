@@ -245,7 +245,7 @@ function onRelayClosed(reason) {
       setBadge(tabId, 'connecting')
       void chrome.action.setTitle({
         tabId,
-        title: 'AIBrowser Chrome Relay: relay reconnecting…',
+        title: 'Browser CLI Chrome Relay: relay reconnecting…',
       })
     }
   }
@@ -304,7 +304,7 @@ async function reannounceAttachedTabs() {
       setBadge(tabId, 'off')
       void chrome.action.setTitle({
         tabId,
-        title: 'AIBrowser Chrome Relay (click to attach/detach)',
+        title: 'Browser CLI Chrome Relay (click to attach/detach)',
       })
       continue
     }
@@ -343,7 +343,7 @@ async function reannounceAttachedTabs() {
       setBadge(tabId, 'on')
       void chrome.action.setTitle({
         tabId,
-        title: 'AIBrowser Chrome Relay: attached (click to detach)',
+        title: 'Browser CLI Chrome Relay: attached (click to detach)',
       })
     } catch {
       // Relay send failed (e.g. WS closed in the gap between ensureRelayConnection
@@ -353,7 +353,7 @@ async function reannounceAttachedTabs() {
       setBadge(tabId, 'connecting')
       void chrome.action.setTitle({
         tabId,
-        title: 'AIBrowser Chrome Relay: relay reconnecting…',
+        title: 'Browser CLI Chrome Relay: relay reconnecting…',
       })
     }
   }
@@ -527,7 +527,7 @@ async function attachTab(tabId, opts = {}) {
   tabBySession.set(sessionId, tabId)
   void chrome.action.setTitle({
     tabId,
-    title: 'AIBrowser Chrome Relay: attached (click to detach)',
+    title: 'Browser CLI Chrome Relay: attached (click to detach)',
   })
 
   if (!opts.skipAttachedEvent) {
@@ -598,7 +598,7 @@ async function detachTab(tabId, reason) {
   setBadge(tabId, 'off')
   void chrome.action.setTitle({
     tabId,
-    title: 'AIBrowser Chrome Relay (click to attach/detach)',
+    title: 'Browser CLI Chrome Relay (click to attach/detach)',
   })
 
   await persistState()
@@ -619,7 +619,7 @@ async function connectOrToggleForActiveTab() {
       setBadge(tabId, 'off')
       void chrome.action.setTitle({
         tabId,
-        title: 'AIBrowser Chrome Relay (click to attach/detach)',
+        title: 'Browser CLI Chrome Relay (click to attach/detach)',
       })
       return
     }
@@ -637,7 +637,7 @@ async function connectOrToggleForActiveTab() {
     setBadge(tabId, 'connecting')
     void chrome.action.setTitle({
       tabId,
-      title: 'AIBrowser Chrome Relay: connecting to local relay…',
+      title: 'Browser CLI Chrome Relay: connecting to local relay…',
     })
 
     try {
@@ -648,7 +648,7 @@ async function connectOrToggleForActiveTab() {
       setBadge(tabId, 'error')
       void chrome.action.setTitle({
         tabId,
-        title: 'AIBrowser Chrome Relay: relay not running (open options for setup)',
+        title: 'Browser CLI Chrome Relay: relay not running (open options for setup)',
       })
       void maybeOpenHelpOnce()
       const message = err instanceof Error ? err.message : String(err)
@@ -868,7 +868,7 @@ async function onDebuggerDetach(source, reason) {
   setBadge(tabId, 'connecting')
   void chrome.action.setTitle({
     tabId,
-    title: 'AIBrowser Chrome Relay: re-attaching after navigation…',
+    title: 'Browser CLI Chrome Relay: re-attaching after navigation…',
   })
 
   // Extend re-attach window from 2.5 s to ~7.7 s (5 attempts).
@@ -901,7 +901,7 @@ async function onDebuggerDetach(source, reason) {
         setBadge(tabId, 'connecting')
         void chrome.action.setTitle({
           tabId,
-          title: 'AIBrowser Chrome Relay: attached, waiting for relay reconnect…',
+          title: 'Browser CLI Chrome Relay: attached, waiting for relay reconnect…',
         })
       }
       return
@@ -914,7 +914,7 @@ async function onDebuggerDetach(source, reason) {
   setBadge(tabId, 'off')
   void chrome.action.setTitle({
     tabId,
-    title: 'AIBrowser Chrome Relay: re-attach failed (click to retry)',
+    title: 'Browser CLI Chrome Relay: re-attach failed (click to retry)',
   })
 }
 

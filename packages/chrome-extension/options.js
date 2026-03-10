@@ -27,7 +27,7 @@ async function checkRelayReachable(port, token) {
   const url = `http://127.0.0.1:${port}/json/version`
   const trimmedToken = String(token || '').trim()
   if (!trimmedToken) {
-    setStatus('error', 'Gateway token required. Save your gateway token to connect.')
+    setStatus('error', 'Relay token required. Save your relay token to connect.')
     return
   }
   try {

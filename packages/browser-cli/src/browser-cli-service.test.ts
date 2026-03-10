@@ -64,12 +64,12 @@ describe("browser service commands", () => {
       homeDir: "/Users/tester",
       daemonCommand: {
         command: "/opt/homebrew/bin/bun",
-        args: ["run", "/repo/packages/browser-cli/src/aibrowserd.ts", "run"],
-        displayCommand: "aibrowserd run",
+        args: ["run", "/repo/packages/browser-cli/src/browser-clid.ts", "run"],
+        displayCommand: "browser-clid run",
       },
       env: {
-        AIBROWSER_AUTH_TOKEN: "smoke-token",
-        AIBROWSER_CONTROL_PORT: "18888",
+        BROWSER_CLI_AUTH_TOKEN: "smoke-token",
+        BROWSER_CLI_CONTROL_PORT: "18888",
       },
       workingDirectory: "/repo",
     });
@@ -77,16 +77,16 @@ describe("browser service commands", () => {
     expect(result.platform).toBe("launchd");
     expect(mkdirCalls).toContain("/Users/tester/Library/LaunchAgents");
     expect(writeCalls[0]?.filePath).toBe(
-      "/Users/tester/Library/LaunchAgents/com.aibrowser.aibrowserd.plist",
+      "/Users/tester/Library/LaunchAgents/com.browsercli.browser-clid.plist",
     );
-    expect(writeCalls[0]?.content).toContain("com.aibrowser.aibrowserd");
+    expect(writeCalls[0]?.content).toContain("com.browsercli.browser-clid");
     expect(execCalls).toEqual([
       {
         command: "launchctl",
         args: [
           "bootstrap",
           "gui/501",
-          "/Users/tester/Library/LaunchAgents/com.aibrowser.aibrowserd.plist",
+          "/Users/tester/Library/LaunchAgents/com.browsercli.browser-clid.plist",
         ],
       },
     ]);
@@ -102,22 +102,22 @@ describe("browser service commands", () => {
       homeDir: "/home/tester",
       daemonCommand: {
         command: "/usr/bin/bun",
-        args: ["run", "/repo/packages/browser-cli/src/aibrowserd.ts", "run"],
-        displayCommand: "aibrowserd run",
+        args: ["run", "/repo/packages/browser-cli/src/browser-clid.ts", "run"],
+        displayCommand: "browser-clid run",
       },
       env: {
-        AIBROWSER_AUTH_TOKEN: "smoke-token",
+        BROWSER_CLI_AUTH_TOKEN: "smoke-token",
       },
       workingDirectory: "/repo",
     });
 
     expect(result.platform).toBe("systemd");
     expect(mkdirCalls).toContain("/home/tester/.config/systemd/user");
-    expect(writeCalls[0]?.filePath).toBe("/home/tester/.config/systemd/user/aibrowser.service");
-    expect(writeCalls[0]?.content).toContain("ExecStart=/usr/bin/bun run /repo/packages/browser-cli/src/aibrowserd.ts run");
+    expect(writeCalls[0]?.filePath).toBe("/home/tester/.config/systemd/user/browser-cli.service");
+    expect(writeCalls[0]?.content).toContain("ExecStart=/usr/bin/bun run /repo/packages/browser-cli/src/browser-clid.ts run");
     expect(execCalls).toEqual([
       { command: "systemctl", args: ["--user", "daemon-reload"] },
-      { command: "systemctl", args: ["--user", "enable", "--now", "aibrowser.service"] },
+      { command: "systemctl", args: ["--user", "enable", "--now", "browser-cli.service"] },
     ]);
   });
 
@@ -131,30 +131,30 @@ describe("browser service commands", () => {
       localAppDataDir: "C:\\Users\\tester\\AppData\\Local",
       daemonCommand: {
         command: "C:\\Program Files\\Bun\\bun.exe",
-        args: ["run", "C:\\repo\\packages\\browser-cli\\src\\aibrowserd.ts", "run"],
-        displayCommand: "aibrowserd run",
+        args: ["run", "C:\\repo\\packages\\browser-cli\\src\\browser-clid.ts", "run"],
+        displayCommand: "browser-clid run",
       },
       env: {
-        AIBROWSER_AUTH_TOKEN: "smoke-token",
+        BROWSER_CLI_AUTH_TOKEN: "smoke-token",
       },
       winswExecutableSource: "D:\\tools\\winsw.exe",
       workingDirectory: "C:\\repo",
     });
 
     expect(result.platform).toBe("windows");
-    expect(mkdirCalls).toContain("C:\\Users\\tester\\AppData\\Local\\aibrowser\\service");
+    expect(mkdirCalls).toContain("C:\\Users\\tester\\AppData\\Local\\browser-cli\\service");
     expect(copyCalls).toEqual([
       {
         from: "D:\\tools\\winsw.exe",
-        to: "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service\\aibrowser-service.exe",
+        to: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli-service.exe",
       },
     ]);
     expect(writeCalls[0]?.filePath).toBe(
-      "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service\\aibrowser.xml",
+      "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli.xml",
     );
     expect(execCalls).toEqual([
       {
-        command: "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service\\aibrowser-service.exe",
+        command: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli-service.exe",
         args: ["install"],
       },
     ]);
@@ -184,18 +184,18 @@ describe("browser service commands", () => {
     expect(execCalls).toEqual([
       {
         command: "launchctl",
-        args: ["print", "gui/501/com.aibrowser.aibrowserd"],
+        args: ["print", "gui/501/com.browsercli.browser-clid"],
       },
       {
         command: "systemctl",
-        args: ["--user", "is-enabled", "aibrowser.service"],
+        args: ["--user", "is-enabled", "browser-cli.service"],
       },
       {
         command: "systemctl",
-        args: ["--user", "is-active", "aibrowser.service"],
+        args: ["--user", "is-active", "browser-cli.service"],
       },
       {
-        command: "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service\\aibrowser-service.exe",
+        command: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli-service.exe",
         args: ["status"],
       },
     ]);
@@ -207,16 +207,16 @@ describe("browser service commands", () => {
     const controller = createBrowserServiceController(deps);
 
     runResponses.set(
-      JSON.stringify(["launchctl", ["print", "gui/501/com.aibrowser.aibrowserd"]]),
+      JSON.stringify(["launchctl", ["print", "gui/501/com.browsercli.browser-clid"]]),
       { code: 113, stdout: "", stderr: "Could not find service" },
     );
     runResponses.set(
-      JSON.stringify(["systemctl", ["--user", "is-enabled", "aibrowser.service"]]),
+      JSON.stringify(["systemctl", ["--user", "is-enabled", "browser-cli.service"]]),
       { code: 1, stdout: "disabled\n", stderr: "" },
     );
     runResponses.set(
       JSON.stringify([
-        "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service\\aibrowser-service.exe",
+        "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli-service.exe",
         ["status"],
       ]),
       { code: 1, stdout: "NonExistent\n", stderr: "" },
@@ -241,14 +241,14 @@ describe("browser service commands", () => {
     expect(execCalls).toEqual([
       {
         command: "launchctl",
-        args: ["print", "gui/501/com.aibrowser.aibrowserd"],
+        args: ["print", "gui/501/com.browsercli.browser-clid"],
       },
       {
         command: "systemctl",
-        args: ["--user", "is-enabled", "aibrowser.service"],
+        args: ["--user", "is-enabled", "browser-cli.service"],
       },
       {
-        command: "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service\\aibrowser-service.exe",
+        command: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli-service.exe",
         args: ["status"],
       },
     ]);
@@ -275,30 +275,30 @@ describe("browser service commands", () => {
     expect(execCalls).toEqual([
       {
         command: "launchctl",
-        args: ["bootout", "gui/501/com.aibrowser.aibrowserd"],
+        args: ["bootout", "gui/501/com.browsercli.browser-clid"],
       },
       {
         command: "systemctl",
-        args: ["--user", "disable", "--now", "aibrowser.service"],
+        args: ["--user", "disable", "--now", "browser-cli.service"],
       },
       {
-        command: "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service\\aibrowser-service.exe",
+        command: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli-service.exe",
         args: ["uninstall"],
       },
     ]);
     expect(rmCalls).toEqual([
       {
-        targetPath: "/Users/tester/Library/LaunchAgents/com.aibrowser.aibrowserd.plist",
+        targetPath: "/Users/tester/Library/LaunchAgents/com.browsercli.browser-clid.plist",
         recursive: true,
         force: true,
       },
       {
-        targetPath: "/home/tester/.config/systemd/user/aibrowser.service",
+        targetPath: "/home/tester/.config/systemd/user/browser-cli.service",
         recursive: true,
         force: true,
       },
       {
-        targetPath: "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service",
+        targetPath: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service",
         recursive: true,
         force: true,
       },
@@ -324,14 +324,14 @@ describe("browser service commands", () => {
     expect(execCalls).toEqual([
       {
         command: "launchctl",
-        args: ["start", "gui/501/com.aibrowser.aibrowserd"],
+        args: ["start", "gui/501/com.browsercli.browser-clid"],
       },
       {
         command: "systemctl",
-        args: ["--user", "stop", "aibrowser.service"],
+        args: ["--user", "stop", "browser-cli.service"],
       },
       {
-        command: "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service\\aibrowser-service.exe",
+        command: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli-service.exe",
         args: ["restart"],
       },
     ]);

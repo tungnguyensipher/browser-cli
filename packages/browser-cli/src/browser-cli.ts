@@ -12,7 +12,7 @@ import { registerBrowserStateCommands } from "./browser-cli-state.js";
 
 export function registerBrowserCli(program: Command) {
   program
-    .name("aibrowser")
+    .name("browser-cli")
     .description("Standalone browser runtime CLI")
     .option("--json", "Output machine-readable JSON", false)
     .option("--base-url <url>", "Browser service base URL")

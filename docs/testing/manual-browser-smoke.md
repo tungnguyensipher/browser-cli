@@ -20,22 +20,22 @@ This smoke path validates the standalone browser service and CLI in Node-first m
 Preferred foreground daemon command:
 
 ```bash
-AIBROWSER_AUTH_TOKEN=smoke-token \
-AIBROWSER_CONTROL_PORT=18888 \
-bun run packages/browser-cli/src/aibrowserd.ts run
+BROWSER_CLI_AUTH_TOKEN=smoke-token \
+BROWSER_CLI_CONTROL_PORT=18888 \
+bun run packages/browser-cli/src/browser-clid.ts run
 ```
 
 Equivalent direct service bootstrap:
 
 ```bash
-AIBROWSER_AUTH_TOKEN=smoke-token \
-AIBROWSER_CONTROL_PORT=18888 \
+BROWSER_CLI_AUTH_TOKEN=smoke-token \
+BROWSER_CLI_CONTROL_PORT=18888 \
 bun --eval 'import { startBrowserControlServerFromConfig } from "./packages/browser-service/src/server.ts"; const state = await startBrowserControlServerFromConfig(); console.log(state ? `STARTED:${state.port}` : "NOT_STARTED"); setInterval(() => {}, 1 << 30);'
 ```
 
 Expected:
 
-- The process prints either `aibrowserd listening on http://127.0.0.1:18888/` or `STARTED:18888`.
+- The process prints either `browser-clid listening on http://127.0.0.1:18888/` or `STARTED:18888`.
 - Requests without auth fail closed.
 
 ```bash
@@ -97,7 +97,7 @@ bun run packages/browser-cli/src/index.ts --base-url http://127.0.0.1:18888 --au
 Expected:
 
 - Both commands return `ok: true`.
-- Both responses include a saved media `path` under `.aibrowser/media/`.
+- Both responses include a saved media `path` under `.browser-cli/media/`.
 
 ## Navigate + type + evaluate smoke
 

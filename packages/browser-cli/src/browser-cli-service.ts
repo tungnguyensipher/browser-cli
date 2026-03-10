@@ -110,7 +110,7 @@ function resolveManagedEnv(env?: Record<string, string>): Record<string, string>
         if (!value) {
           return false;
         }
-        return key.startsWith("AIBROWSER_") || key === "OPENCLAW_GATEWAY_TOKEN" || key === "CLAWDBOT_GATEWAY_TOKEN";
+        return key.startsWith("BROWSER_CLI_");
       })
       .map(([key, value]) => [key, String(value)]),
   );
@@ -173,7 +173,7 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
         await deps.writeFile(
           paths.serviceFile,
           renderLaunchdPlist({
-            label: "com.aibrowser.aibrowserd",
+            label: "com.browsercli.browser-clid",
             command: daemon.command,
             args: daemon.args,
             workingDirectory: params.workingDirectory,
@@ -199,7 +199,7 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
         await deps.writeFile(
           paths.serviceFile,
           renderSystemdUnit({
-            description: "AIBrowser Service",
+            description: "Browser CLI Service",
             command: daemon.command,
             args: daemon.args,
             workingDirectory: params.workingDirectory,
@@ -208,8 +208,8 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
         );
         assertCommandSucceeded(await deps.run("systemctl", ["--user", "daemon-reload"]), "systemctl daemon-reload");
         assertCommandSucceeded(
-          await deps.run("systemctl", ["--user", "enable", "--now", "aibrowser.service"]),
-          "systemctl enable --now aibrowser.service",
+          await deps.run("systemctl", ["--user", "enable", "--now", "browser-cli.service"]),
+          "systemctl enable --now browser-cli.service",
         );
         return { platform };
       }
@@ -226,9 +226,9 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
       await deps.writeFile(
         paths.wrapperConfigFile,
         renderWinSwXml({
-          id: "aibrowser",
-          name: "AIBrowser",
-          description: "AIBrowser background service",
+          id: "browser-cli",
+          name: "Browser CLI",
+          description: "Browser CLI background service",
           command: daemon.command,
           args: daemon.args,
           workingDirectory: params.workingDirectory,
@@ -250,7 +250,7 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
 
       if (platform === "launchd") {
         assertCommandSucceeded(
-          await deps.run("launchctl", ["bootout", `gui/${deps.getUid()}/com.aibrowser.aibrowserd`]),
+          await deps.run("launchctl", ["bootout", `gui/${deps.getUid()}/com.browsercli.browser-clid`]),
           "launchctl bootout",
         );
         if (paths.serviceFile) {
@@ -260,8 +260,8 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
       }
       if (platform === "systemd") {
         assertCommandSucceeded(
-          await deps.run("systemctl", ["--user", "disable", "--now", "aibrowser.service"]),
-          "systemctl disable --now aibrowser.service",
+          await deps.run("systemctl", ["--user", "disable", "--now", "browser-cli.service"]),
+          "systemctl disable --now browser-cli.service",
         );
         if (paths.serviceFile) {
           await deps.rm(paths.serviceFile, { recursive: true, force: true });
@@ -287,18 +287,18 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
       });
 
       if (platform === "launchd") {
-        const result = await deps.run("launchctl", ["print", `gui/${deps.getUid()}/com.aibrowser.aibrowserd`]);
+        const result = await deps.run("launchctl", ["print", `gui/${deps.getUid()}/com.browsercli.browser-clid`]);
         if (result.code !== 0) {
           return { platform, installed: false, running: false };
         }
         return { platform, installed: true, running: true };
       }
       if (platform === "systemd") {
-        const enabled = await deps.run("systemctl", ["--user", "is-enabled", "aibrowser.service"]);
+        const enabled = await deps.run("systemctl", ["--user", "is-enabled", "browser-cli.service"]);
         if (enabled.code !== 0) {
           return { platform, installed: false, running: false };
         }
-        const active = await deps.run("systemctl", ["--user", "is-active", "aibrowser.service"]);
+        const active = await deps.run("systemctl", ["--user", "is-active", "browser-cli.service"]);
         return {
           platform,
           installed: true,
@@ -324,15 +324,15 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
 
       if (platform === "launchd") {
         assertCommandSucceeded(
-          await deps.run("launchctl", ["start", `gui/${deps.getUid()}/com.aibrowser.aibrowserd`]),
+          await deps.run("launchctl", ["start", `gui/${deps.getUid()}/com.browsercli.browser-clid`]),
           "launchctl start",
         );
         return { platform };
       }
       if (platform === "systemd") {
         assertCommandSucceeded(
-          await deps.run("systemctl", ["--user", "start", "aibrowser.service"]),
-          "systemctl start aibrowser.service",
+          await deps.run("systemctl", ["--user", "start", "browser-cli.service"]),
+          "systemctl start browser-cli.service",
         );
         return { platform };
       }
@@ -353,15 +353,15 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
 
       if (platform === "launchd") {
         assertCommandSucceeded(
-          await deps.run("launchctl", ["stop", `gui/${deps.getUid()}/com.aibrowser.aibrowserd`]),
+          await deps.run("launchctl", ["stop", `gui/${deps.getUid()}/com.browsercli.browser-clid`]),
           "launchctl stop",
         );
         return { platform };
       }
       if (platform === "systemd") {
         assertCommandSucceeded(
-          await deps.run("systemctl", ["--user", "stop", "aibrowser.service"]),
-          "systemctl stop aibrowser.service",
+          await deps.run("systemctl", ["--user", "stop", "browser-cli.service"]),
+          "systemctl stop browser-cli.service",
         );
         return { platform };
       }
@@ -382,15 +382,15 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
 
       if (platform === "launchd") {
         assertCommandSucceeded(
-          await deps.run("launchctl", ["kickstart", "-k", `gui/${deps.getUid()}/com.aibrowser.aibrowserd`]),
+          await deps.run("launchctl", ["kickstart", "-k", `gui/${deps.getUid()}/com.browsercli.browser-clid`]),
           "launchctl kickstart -k",
         );
         return { platform };
       }
       if (platform === "systemd") {
         assertCommandSucceeded(
-          await deps.run("systemctl", ["--user", "restart", "aibrowser.service"]),
-          "systemctl restart aibrowser.service",
+          await deps.run("systemctl", ["--user", "restart", "browser-cli.service"]),
+          "systemctl restart browser-cli.service",
         );
         return { platform };
       }
@@ -419,7 +419,7 @@ function printServiceResult(parent: BrowserParentOpts, payload: unknown) {
 }
 
 function resolveDefaultDaemonEntry() {
-  return fileURLToPath(new URL("./aibrowserd.ts", import.meta.url));
+  return fileURLToPath(new URL("./browser-clid.ts", import.meta.url));
 }
 
 export function registerBrowserServiceCommands(
@@ -427,7 +427,7 @@ export function registerBrowserServiceCommands(
   parentOpts: (cmd: Command) => BrowserParentOpts,
 ) {
   const controller = createBrowserServiceController();
-  const service = browser.command("service").description("Manage OS background services for aibrowserd");
+  const service = browser.command("service").description("Manage OS background services for browser-clid");
 
   service
     .command("install")
@@ -446,7 +446,7 @@ export function registerBrowserServiceCommands(
         if (printServiceResult(parent, result)) {
           return;
         }
-        defaultRuntime.log(info(`installed ${result.platform} service for aibrowserd`));
+        defaultRuntime.log(info(`installed ${result.platform} service for browser-clid`));
       });
     });
 
@@ -460,13 +460,13 @@ export function registerBrowserServiceCommands(
         if (printServiceResult(parent, result)) {
           return;
         }
-        defaultRuntime.log(info(`uninstalled ${result.platform} service for aibrowserd`));
+        defaultRuntime.log(info(`uninstalled ${result.platform} service for browser-clid`));
       });
     });
 
   service
     .command("status")
-    .description("Show OS service manager status for aibrowserd")
+    .description("Show OS service manager status for browser-clid")
     .action(async (_opts, cmd) => {
       const parent = parentOpts(cmd);
       await runServiceCommand(async () => {
@@ -490,7 +490,7 @@ export function registerBrowserServiceCommands(
         if (printServiceResult(parent, result)) {
           return;
         }
-        defaultRuntime.log(info(`started ${result.platform} service for aibrowserd`));
+        defaultRuntime.log(info(`started ${result.platform} service for browser-clid`));
       });
     });
 
@@ -504,7 +504,7 @@ export function registerBrowserServiceCommands(
         if (printServiceResult(parent, result)) {
           return;
         }
-        defaultRuntime.log(info(`stopped ${result.platform} service for aibrowserd`));
+        defaultRuntime.log(info(`stopped ${result.platform} service for browser-clid`));
       });
     });
 
@@ -518,7 +518,7 @@ export function registerBrowserServiceCommands(
         if (printServiceResult(parent, result)) {
           return;
         }
-        defaultRuntime.log(info(`restarted ${result.platform} service for aibrowserd`));
+        defaultRuntime.log(info(`restarted ${result.platform} service for browser-clid`));
       });
     });
 }

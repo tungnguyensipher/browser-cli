@@ -1,21 +1,21 @@
 import path from "node:path";
 import { describe, expect, it } from "bun:test";
 
-const daemonEntry = new URL("./aibrowserd.ts", import.meta.url).pathname;
+const daemonEntry = new URL("./browser-clid.ts", import.meta.url).pathname;
 const packageDir = path.resolve(path.dirname(daemonEntry), "..");
 
 describe("browser service shared helpers", () => {
   it("resolves service names, service paths, and daemon commands for each supported OS", async () => {
     const {
-      resolveAibrowserServiceName,
+      resolveBrowserCliServiceName,
       resolveServicePaths,
       resolveDaemonCommand,
     } = await import("./browser-cli-service-shared.js");
 
-    expect(resolveAibrowserServiceName()).toEqual({
-      launchdLabel: "com.aibrowser.aibrowserd",
-      systemdUnit: "aibrowser.service",
-      windowsServiceName: "aibrowser",
+    expect(resolveBrowserCliServiceName()).toEqual({
+      launchdLabel: "com.browsercli.browser-clid",
+      systemdUnit: "browser-cli.service",
+      windowsServiceName: "browser-cli",
     });
 
     expect(
@@ -25,8 +25,8 @@ describe("browser service shared helpers", () => {
       }),
     ).toEqual({
       serviceDir: "/Users/tester/Library/LaunchAgents",
-      serviceFile: "/Users/tester/Library/LaunchAgents/com.aibrowser.aibrowserd.plist",
-      logsDir: "/Users/tester/.aibrowser/service/logs",
+      serviceFile: "/Users/tester/Library/LaunchAgents/com.browsercli.browser-clid.plist",
+      logsDir: "/Users/tester/.browser-cli/service/logs",
       wrapperDir: null,
       wrapperConfigFile: null,
       wrapperExecutable: null,
@@ -39,8 +39,8 @@ describe("browser service shared helpers", () => {
       }),
     ).toEqual({
       serviceDir: "/home/tester/.config/systemd/user",
-      serviceFile: "/home/tester/.config/systemd/user/aibrowser.service",
-      logsDir: "/home/tester/.local/state/aibrowser/service/logs",
+      serviceFile: "/home/tester/.config/systemd/user/browser-cli.service",
+      logsDir: "/home/tester/.local/state/browser-cli/service/logs",
       wrapperDir: null,
       wrapperConfigFile: null,
       wrapperExecutable: null,
@@ -54,10 +54,10 @@ describe("browser service shared helpers", () => {
     ).toEqual({
       serviceDir: null,
       serviceFile: null,
-      logsDir: "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service\\logs",
-      wrapperDir: "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service",
-      wrapperConfigFile: "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service\\aibrowser.xml",
-      wrapperExecutable: "C:\\Users\\tester\\AppData\\Local\\aibrowser\\service\\aibrowser-service.exe",
+      logsDir: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\logs",
+      wrapperDir: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service",
+      wrapperConfigFile: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli.xml",
+      wrapperExecutable: "C:\\Users\\tester\\AppData\\Local\\browser-cli\\service\\browser-cli-service.exe",
     });
 
     const daemon = resolveDaemonCommand({
@@ -68,7 +68,7 @@ describe("browser service shared helpers", () => {
     expect(daemon).toEqual({
       command: "/opt/homebrew/bin/bun",
       args: ["run", daemonEntry, "run"],
-      displayCommand: `aibrowserd run`,
+      displayCommand: `browser-clid run`,
     });
   });
 
@@ -77,19 +77,19 @@ describe("browser service shared helpers", () => {
 
     expect(
       resolveDaemonCommand({
-        daemonBin: "/usr/local/bin/aibrowserd",
+        daemonBin: "/usr/local/bin/browser-clid",
         daemonEntry,
         mode: "bin",
       }),
     ).toEqual({
-      command: "/usr/local/bin/aibrowserd",
+      command: "/usr/local/bin/browser-clid",
       args: ["run"],
-      displayCommand: "aibrowserd run",
+      displayCommand: "browser-clid run",
     });
   });
 });
 
-describe("aibrowserd", () => {
+describe("browser-clid", () => {
   it("exposes a foreground run command", () => {
     const result = Bun.spawnSync({
       cmd: ["bun", "run", daemonEntry, "--help"],
@@ -102,7 +102,7 @@ describe("aibrowserd", () => {
     const stdout = new TextDecoder().decode(result.stdout);
     const stderr = new TextDecoder().decode(result.stderr);
     expect(result.exitCode, `stdout:\n${stdout}\n\nstderr:\n${stderr}`).toBe(0);
-    expect(stdout).toContain("aibrowserd");
+    expect(stdout).toContain("browser-clid");
     expect(stdout).toContain("run");
   });
 });

@@ -18,7 +18,7 @@ function resolveBundledExtensionRootDir(here = path.dirname(fileURLToPath(import
 }
 
 function resolveInstalledExtensionRootDir() {
-  return path.join(os.homedir(), ".aibrowser", "chrome-extension");
+  return path.join(os.homedir(), ".browser-cli", "chrome-extension");
 }
 
 function hasManifest(dir: string) {
@@ -67,7 +67,7 @@ export function registerBrowserExtensionCommands(
               "Next:",
               "- Chrome -> chrome://extensions -> enable Developer mode",
               `- Load unpacked -> select: ${shortenHomePath(installed.path)}`,
-              `- Then use ${formatCliCommand("aibrowser extension path")} to print it again later`,
+              `- Then use ${formatCliCommand("browser-cli extension path")} to print it again later`,
             ].join("\n"),
           ),
         );
@@ -86,7 +86,7 @@ export function registerBrowserExtensionCommands(
       if (!hasManifest(dir)) {
         defaultRuntime.error(
           danger(
-            `Chrome extension is not installed. Run: "${formatCliCommand("aibrowser extension install")}"`,
+            `Chrome extension is not installed. Run: "${formatCliCommand("browser-cli extension install")}"`,
           ),
         );
         defaultRuntime.exit(1);

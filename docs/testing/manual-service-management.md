@@ -1,20 +1,20 @@
 # Manual Service Management
 
-This guide covers the new `aibrowser service ...` commands and the dedicated foreground daemon entrypoint `aibrowserd`.
+This guide covers the new `browser-cli service ...` commands and the dedicated foreground daemon entrypoint `browser-clid`.
 
 ## Foreground daemon
 
 Run the service manually in the foreground with:
 
 ```bash
-AIBROWSER_AUTH_TOKEN=smoke-token \
-AIBROWSER_CONTROL_PORT=18888 \
-bun run packages/browser-cli/src/aibrowserd.ts run
+BROWSER_CLI_AUTH_TOKEN=private-token \
+BROWSER_CLI_CONTROL_PORT=18888 \
+bun run packages/browser-cli/src/browser-clid.ts run
 ```
 
 Expected:
 
-- The daemon prints `aibrowserd listening on http://127.0.0.1:18888/`.
+- The daemon prints `browser-clid listening on http://127.0.0.1:18888/`.
 - `Ctrl+C` stops the browser control server cleanly.
 
 ## Service command family
@@ -36,9 +36,7 @@ Available commands:
 
 The service installer captures the current environment for:
 
-- `AIBROWSER_*`
-- `OPENCLAW_GATEWAY_TOKEN`
-- `CLAWDBOT_GATEWAY_TOKEN`
+- `BROWSER_CLI_*`
 
 Run `install` from the directory you want the service to use as its working directory.
 
@@ -47,15 +45,15 @@ Run `install` from the directory you want the service to use as its working dire
 Install:
 
 ```bash
-AIBROWSER_AUTH_TOKEN=smoke-token \
-AIBROWSER_CONTROL_PORT=18888 \
+BROWSER_CLI_AUTH_TOKEN=private-token \
+BROWSER_CLI_CONTROL_PORT=18888 \
 bun run packages/browser-cli/src/index.ts service install
 ```
 
 Generated files:
 
-- `~/Library/LaunchAgents/com.aibrowser.aibrowserd.plist`
-- `~/.aibrowser/service/logs/`
+- `~/Library/LaunchAgents/com.browsercli.browser-clid.plist`
+- `~/.browser-cli/service/logs/`
 
 Lifecycle:
 
@@ -80,15 +78,15 @@ Notes:
 Install:
 
 ```bash
-AIBROWSER_AUTH_TOKEN=smoke-token \
-AIBROWSER_CONTROL_PORT=18888 \
+BROWSER_CLI_AUTH_TOKEN=private-token \
+BROWSER_CLI_CONTROL_PORT=18888 \
 bun run packages/browser-cli/src/index.ts service install
 ```
 
 Generated files:
 
-- `~/.config/systemd/user/aibrowser.service`
-- `~/.local/state/aibrowser/service/logs/`
+- `~/.config/systemd/user/browser-cli.service`
+- `~/.local/state/browser-cli/service/logs/`
 
 Lifecycle:
 
@@ -103,23 +101,23 @@ bun run packages/browser-cli/src/index.ts service uninstall
 Notes:
 
 - Install runs `systemctl --user daemon-reload`
-- Install enables and starts the unit with `systemctl --user enable --now aibrowser.service`
+- Install enables and starts the unit with `systemctl --user enable --now browser-cli.service`
 
 ## Windows with WinSW wrapper
 
 Windows service support uses a WinSW wrapper executable. Provide the wrapper path during install:
 
 ```powershell
-$env:AIBROWSER_AUTH_TOKEN="smoke-token"
-$env:AIBROWSER_CONTROL_PORT="18888"
+$env:BROWSER_CLI_AUTH_TOKEN="private-token"
+$env:BROWSER_CLI_CONTROL_PORT="18888"
 bun run packages/browser-cli/src/index.ts service install --winsw-exe "D:\tools\winsw.exe"
 ```
 
 Generated files:
 
-- `%LOCALAPPDATA%\aibrowser\service\aibrowser-service.exe`
-- `%LOCALAPPDATA%\aibrowser\service\aibrowser.xml`
-- `%LOCALAPPDATA%\aibrowser\service\logs\`
+- `%LOCALAPPDATA%\browser-cli\service\browser-cli-service.exe`
+- `%LOCALAPPDATA%\browser-cli\service\browser-cli.xml`
+- `%LOCALAPPDATA%\browser-cli\service\logs\`
 
 Lifecycle:
 
@@ -134,5 +132,5 @@ bun run packages/browser-cli/src/index.ts service uninstall
 Notes:
 
 - Install copies the provided WinSW executable into the managed service directory.
-- The wrapper then manages `aibrowserd` as a Windows service.
+- The wrapper then manages `browser-clid` as a Windows service.
 - This avoids needing a custom native Windows service host in this repo.

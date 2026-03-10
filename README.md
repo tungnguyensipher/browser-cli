@@ -1,4 +1,4 @@
-# AIBrowser
+# Browser CLI
 
 A standalone browser runtime and CLI for local browser automation.
 
@@ -14,26 +14,26 @@ npm install -g @tungthedev/browser-cli
 
 This installs two binaries:
 
-- `aibrowser`
-- `aibrowserd`
+- `browser-cli`
+- `browser-clid`
 
 ## Quick Start
 
 Start the foreground daemon:
 
 ```bash
-AIBROWSER_AUTH_TOKEN=smoke-token \
-AIBROWSER_CONTROL_PORT=18888 \
-aibrowserd run
+BROWSER_CLI_AUTH_TOKEN=private-token \
+BROWSER_CLI_CONTROL_PORT=18888 \
+browser-clid run
 ```
 
 In another shell:
 
 ```bash
-aibrowser status
-aibrowser start
-aibrowser open https://example.com
-aibrowser snapshot --format ai --refs aria
+browser-cli status
+browser-cli start
+browser-cli open https://example.com
+browser-cli snapshot --format ai --refs aria
 ```
 
 Local CLI defaults:
@@ -42,7 +42,7 @@ Local CLI defaults:
 - `--browser-profile` defaults to `openclaw`
 - `--json` defaults to `true` from local config, otherwise normal CLI output
 - auth token resolution order:
-  `--auth-token` -> `AIBROWSER_AUTH_TOKEN` -> `.aibrowser.json` -> `~/.aibrowser/auth.json`
+  `--auth-token` -> `BROWSER_CLI_AUTH_TOKEN` -> `.browser-cli.json` -> `~/.browser-cli/auth.json`
 
 Project-local config is optional:
 
@@ -66,7 +66,7 @@ Machine-local shared auth file:
 Default path:
 
 ```text
-~/.aibrowser/auth.json
+~/.browser-cli/auth.json
 ```
 
 ## Service Management
@@ -74,7 +74,7 @@ Default path:
 Install the daemon into the local OS service manager:
 
 ```bash
-aibrowser service install
+browser-cli service install
 ```
 
 Supported service managers:
@@ -86,11 +86,11 @@ Supported service managers:
 Lifecycle commands:
 
 ```bash
-aibrowser service status
-aibrowser service start
-aibrowser service stop
-aibrowser service restart
-aibrowser service uninstall
+browser-cli service status
+browser-cli service start
+browser-cli service stop
+browser-cli service restart
+browser-cli service uninstall
 ```
 
 More detail: [docs/testing/manual-service-management.md](docs/testing/manual-service-management.md)
@@ -100,8 +100,8 @@ More detail: [docs/testing/manual-service-management.md](docs/testing/manual-ser
 Install the unpacked extension to a stable local path:
 
 ```bash
-aibrowser extension install
-aibrowser extension path
+browser-cli extension install
+browser-cli extension path
 ```
 
 The extension defaults to relay port `18889`.
@@ -130,15 +130,7 @@ GitHub Actions:
 
 ## Attribution
 
-AIBrowser is a focused extraction of the standalone browser runtime work originally developed in OpenClaw.
-
-Protocol-critical and UX-critical pieces in this repo were copied first from the OpenClaw implementation and then adapted for AIBrowser-specific host glue, packaging, service management, and branding.
-
-Thank you to the OpenClaw maintainers for the original implementation and the foundation it provided.
-
-Related local source during this extraction:
-
-- `../openclaw`
+Browser CLI is a focused extraction of the standalone browser runtime work originally developed in [OpenClaw](https://github.com/openclaw/openclaw).
 
 ## License
 

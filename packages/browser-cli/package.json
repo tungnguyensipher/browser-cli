@@ -2,7 +2,7 @@
   "name": "@tungthedev/browser-cli",
   "version": "0.0.0",
   "private": false,
-  "description": "Standalone browser runtime CLI and daemon for AIBrowser",
+  "description": "Standalone browser runtime CLI and daemon for Browser CLI",
   "license": "MIT",
   "type": "module",
   "files": [
@@ -10,8 +10,8 @@
     "README.md"
   ],
   "bin": {
-    "aibrowser": "./dist/index.mjs",
-    "aibrowserd": "./dist/aibrowserd.mjs"
+    "browser-cli": "./dist/index.mjs",
+    "browser-clid": "./dist/browser-clid.mjs"
   },
   "exports": {
     ".": {

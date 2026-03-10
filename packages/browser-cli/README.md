@@ -1,6 +1,6 @@
 # @tungthedev/browser-cli
 
-Standalone browser runtime CLI and daemon for AIBrowser.
+Standalone browser runtime CLI and daemon for Browser CLI.
 
 ## Install
 
@@ -10,26 +10,26 @@ npm install -g @tungthedev/browser-cli
 
 Installed binaries:
 
-- `aibrowser`
-- `aibrowserd`
+- `browser-cli`
+- `browser-clid`
 
 ## Quick Start
 
 Start the daemon:
 
 ```bash
-AIBROWSER_AUTH_TOKEN=smoke-token \
-AIBROWSER_CONTROL_PORT=18888 \
-aibrowserd run
+BROWSER_CLI_AUTH_TOKEN=smoke-token \
+BROWSER_CLI_CONTROL_PORT=18888 \
+browser-clid run
 ```
 
 Then use the CLI:
 
 ```bash
-aibrowser status
-aibrowser start
-aibrowser open https://example.com
-aibrowser snapshot --format ai --refs aria
+browser-cli status
+browser-cli start
+browser-cli open https://example.com
+browser-cli snapshot --format ai --refs aria
 ```
 
 Default local behavior:
@@ -37,7 +37,7 @@ Default local behavior:
 - base URL: `http://127.0.0.1:18888`
 - default browser profile: `openclaw`
 - auth token resolution:
-  `--auth-token` -> `AIBROWSER_AUTH_TOKEN` -> `.aibrowser.json` -> `~/.aibrowser/auth.json`
+  `--auth-token` -> `BROWSER_CLI_AUTH_TOKEN` -> `.browser-cli.json` -> `~/.browser-cli/auth.json`
 
 Project-local config example:
 
@@ -53,9 +53,9 @@ Project-local config example:
 ## Service Commands
 
 ```bash
-aibrowser service install
-aibrowser service status
-aibrowser service restart
+browser-cli service install
+browser-cli service status
+browser-cli service restart
 ```
 
 Supported service managers:
@@ -67,8 +67,8 @@ Supported service managers:
 ## Chrome Extension
 
 ```bash
-aibrowser extension install
-aibrowser extension path
+browser-cli extension install
+browser-cli extension path
 ```
 
 The extension defaults to relay port `18889`.
@@ -77,7 +77,7 @@ The extension defaults to relay port `18889`.
 
 This package is a focused extraction of the standalone browser runtime work originally developed in OpenClaw.
 
-Protocol-critical and UX-critical pieces were copied first from the OpenClaw implementation and then adapted for AIBrowser-specific host glue, packaging, service management, and branding.
+Protocol-critical and UX-critical pieces were copied first from the OpenClaw implementation and then adapted for Browser CLI-specific host glue, packaging, service management, and branding.
 
 ## License
 

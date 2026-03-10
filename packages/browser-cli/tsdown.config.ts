@@ -5,7 +5,7 @@ export default defineConfig({
   dts: true,
   entry: {
     index: "./src/index.ts",
-    aibrowserd: "./src/aibrowserd.ts",
+    "browser-clid": "./src/browser-clid.ts",
   },
   format: ["esm"],
   outDir: "dist",

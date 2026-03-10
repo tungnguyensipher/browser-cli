@@ -7,15 +7,14 @@ import { createProgram } from "./index.js";
 const originalCwd = process.cwd();
 const originalFetch = globalThis.fetch;
 const originalEnv = {
-  AIBROWSER_AUTH_TOKEN: process.env.AIBROWSER_AUTH_TOKEN,
-  OPENCLAW_GATEWAY_TOKEN: process.env.OPENCLAW_GATEWAY_TOKEN,
-  AIBROWSER_MACHINE_AUTH_PATH: process.env.AIBROWSER_MACHINE_AUTH_PATH,
+  BROWSER_CLI_AUTH_TOKEN: process.env.BROWSER_CLI_AUTH_TOKEN,
+  BROWSER_CLI_MACHINE_AUTH_PATH: process.env.BROWSER_CLI_MACHINE_AUTH_PATH,
 };
 const originalLog = console.log;
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aibrowser-cli-options-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "browser-cli-options-"));
   tempDirs.push(dir);
   return dir;
 }
@@ -59,7 +58,7 @@ async function runStatus(argv: string[], cwd: string): Promise<RunStatusResult> 
   }) as typeof console.log;
 
   const program = createProgram();
-  await program.parseAsync(["node", "aibrowser", ...argv]);
+  await program.parseAsync(["node", "browser-cli", ...argv]);
   return { fetchCalls, logs };
 }
 
@@ -67,20 +66,15 @@ afterEach(() => {
   process.chdir(originalCwd);
   globalThis.fetch = originalFetch;
   console.log = originalLog;
-  if (originalEnv.AIBROWSER_AUTH_TOKEN === undefined) {
-    delete process.env.AIBROWSER_AUTH_TOKEN;
+  if (originalEnv.BROWSER_CLI_AUTH_TOKEN === undefined) {
+    delete process.env.BROWSER_CLI_AUTH_TOKEN;
   } else {
-    process.env.AIBROWSER_AUTH_TOKEN = originalEnv.AIBROWSER_AUTH_TOKEN;
+    process.env.BROWSER_CLI_AUTH_TOKEN = originalEnv.BROWSER_CLI_AUTH_TOKEN;
   }
-  if (originalEnv.OPENCLAW_GATEWAY_TOKEN === undefined) {
-    delete process.env.OPENCLAW_GATEWAY_TOKEN;
+  if (originalEnv.BROWSER_CLI_MACHINE_AUTH_PATH === undefined) {
+    delete process.env.BROWSER_CLI_MACHINE_AUTH_PATH;
   } else {
-    process.env.OPENCLAW_GATEWAY_TOKEN = originalEnv.OPENCLAW_GATEWAY_TOKEN;
-  }
-  if (originalEnv.AIBROWSER_MACHINE_AUTH_PATH === undefined) {
-    delete process.env.AIBROWSER_MACHINE_AUTH_PATH;
-  } else {
-    process.env.AIBROWSER_MACHINE_AUTH_PATH = originalEnv.AIBROWSER_MACHINE_AUTH_PATH;
+    process.env.BROWSER_CLI_MACHINE_AUTH_PATH = originalEnv.BROWSER_CLI_MACHINE_AUTH_PATH;
   }
   while (tempDirs.length > 0) {
     const dir = tempDirs.pop();
@@ -93,8 +87,7 @@ afterEach(() => {
 
 describe("browser cli option resolution", () => {
   it("uses local defaults when flags and project config are omitted", async () => {
-    delete process.env.AIBROWSER_AUTH_TOKEN;
-    delete process.env.OPENCLAW_GATEWAY_TOKEN;
+    delete process.env.BROWSER_CLI_AUTH_TOKEN;
     const cwd = makeTempDir();
 
     const result = await runStatus(["status"], cwd);
@@ -106,11 +99,11 @@ describe("browser cli option resolution", () => {
     expect(result.logs[0]).toContain('"profile": "openclaw"');
   });
 
-  it("uses AIBROWSER_AUTH_TOKEN before project config and applies .aibrowser.json overrides", async () => {
-    process.env.AIBROWSER_AUTH_TOKEN = "env-token";
+  it("uses BROWSER_CLI_AUTH_TOKEN before project config and applies .browser-cli.json overrides", async () => {
+    process.env.BROWSER_CLI_AUTH_TOKEN = "env-token";
     const cwd = makeTempDir();
     fs.writeFileSync(
-      path.join(cwd, ".aibrowser.json"),
+      path.join(cwd, ".browser-cli.json"),
       JSON.stringify({
         baseUrl: "http://127.0.0.1:19999",
         authToken: "project-token",
@@ -129,12 +122,11 @@ describe("browser cli option resolution", () => {
     expect(result.logs[0]).toContain("profile: openclaw");
   });
 
-  it("falls back to machine auth and ignores OPENCLAW_GATEWAY_TOKEN for local CLI auth", async () => {
-    delete process.env.AIBROWSER_AUTH_TOKEN;
-    process.env.OPENCLAW_GATEWAY_TOKEN = "legacy-token";
+  it("falls back to machine auth when BROWSER_CLI_AUTH_TOKEN is omitted", async () => {
+    delete process.env.BROWSER_CLI_AUTH_TOKEN;
     const cwd = makeTempDir();
     const machineAuthPath = path.join(cwd, "machine-auth.json");
-    process.env.AIBROWSER_MACHINE_AUTH_PATH = machineAuthPath;
+    process.env.BROWSER_CLI_MACHINE_AUTH_PATH = machineAuthPath;
     fs.writeFileSync(machineAuthPath, JSON.stringify({ token: "machine-token" }), "utf8");
 
     const result = await runStatus(["status"], cwd);

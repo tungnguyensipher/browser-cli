@@ -27,7 +27,7 @@ function booleanOrUndefined(value: unknown): boolean | undefined {
 }
 
 export function resolveBrowserCliProjectConfigPath(cwd = process.cwd()): string {
-  return path.join(cwd, ".aibrowser.json");
+  return path.join(cwd, ".browser-cli.json");
 }
 
 export function readBrowserCliProjectConfig(cwd = process.cwd()): BrowserCliProjectConfig {
@@ -79,7 +79,7 @@ export function resolveBrowserCliParentOpts(
 
   const authToken = hasCliSource(command, "authToken")
     ? trimToUndefined(raw.authToken)
-    : trimToUndefined(env.AIBROWSER_AUTH_TOKEN) ??
+    : trimToUndefined(env.BROWSER_CLI_AUTH_TOKEN) ??
       trimToUndefined(projectConfig.authToken) ??
       trimToUndefined(machineAuth.token);
 

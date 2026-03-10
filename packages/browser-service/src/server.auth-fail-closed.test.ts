@@ -55,10 +55,10 @@ describe("browser control auth bootstrap failures", () => {
   let previousPort: string | undefined;
 
   beforeEach(async () => {
-    previousEnabled = process.env.AIBROWSER_BROWSER_ENABLED;
-    previousPort = process.env.AIBROWSER_CONTROL_PORT;
-    process.env.AIBROWSER_BROWSER_ENABLED = "1";
-    process.env.AIBROWSER_CONTROL_PORT = String(await getFreePort());
+    previousEnabled = process.env.BROWSER_CLI_BROWSER_ENABLED;
+    previousPort = process.env.BROWSER_CLI_CONTROL_PORT;
+    process.env.BROWSER_CLI_BROWSER_ENABLED = "1";
+    process.env.BROWSER_CLI_CONTROL_PORT = String(await getFreePort());
     mocks.ensureBrowserControlAuth.mockClear();
     mocks.resolveBrowserControlAuth.mockClear();
     mocks.ensureExtensionRelayForProfiles.mockClear();
@@ -67,14 +67,14 @@ describe("browser control auth bootstrap failures", () => {
   afterEach(async () => {
     await stopBrowserControlServer();
     if (previousEnabled === undefined) {
-      delete process.env.AIBROWSER_BROWSER_ENABLED;
+      delete process.env.BROWSER_CLI_BROWSER_ENABLED;
     } else {
-      process.env.AIBROWSER_BROWSER_ENABLED = previousEnabled;
+      process.env.BROWSER_CLI_BROWSER_ENABLED = previousEnabled;
     }
     if (previousPort === undefined) {
-      delete process.env.AIBROWSER_CONTROL_PORT;
+      delete process.env.BROWSER_CLI_CONTROL_PORT;
     } else {
-      process.env.AIBROWSER_CONTROL_PORT = previousPort;
+      process.env.BROWSER_CLI_CONTROL_PORT = previousPort;
     }
   });
 

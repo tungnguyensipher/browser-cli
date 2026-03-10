@@ -31,11 +31,11 @@ export function resolveServicePlatform(platform = process.platform): ServicePlat
   throw new Error(`Unsupported service platform: ${platform}`);
 }
 
-export function resolveAibrowserServiceName() {
+export function resolveBrowserCliServiceName() {
   return {
-    launchdLabel: "com.aibrowser.aibrowserd",
-    systemdUnit: "aibrowser.service",
-    windowsServiceName: "aibrowser",
+    launchdLabel: "com.browsercli.browser-clid",
+    systemdUnit: "browser-cli.service",
+    windowsServiceName: "browser-cli",
   };
 }
 
@@ -50,13 +50,13 @@ export function resolveServicePaths(params?: {
     params?.localAppDataDir ??
     process.env.LOCALAPPDATA ??
     path.join(homeDir, "AppData", "Local");
-  const names = resolveAibrowserServiceName();
+  const names = resolveBrowserCliServiceName();
 
   if (platform === "launchd") {
     return {
       serviceDir: path.join(homeDir, "Library", "LaunchAgents"),
       serviceFile: path.join(homeDir, "Library", "LaunchAgents", `${names.launchdLabel}.plist`),
-      logsDir: path.join(homeDir, ".aibrowser", "service", "logs"),
+      logsDir: path.join(homeDir, ".browser-cli", "service", "logs"),
       wrapperDir: null,
       wrapperConfigFile: null,
       wrapperExecutable: null,
@@ -67,21 +67,21 @@ export function resolveServicePaths(params?: {
     return {
       serviceDir: path.join(homeDir, ".config", "systemd", "user"),
       serviceFile: path.join(homeDir, ".config", "systemd", "user", names.systemdUnit),
-      logsDir: path.join(homeDir, ".local", "state", "aibrowser", "service", "logs"),
+      logsDir: path.join(homeDir, ".local", "state", "browser-cli", "service", "logs"),
       wrapperDir: null,
       wrapperConfigFile: null,
       wrapperExecutable: null,
     };
   }
 
-  const wrapperDir = path.win32.join(localAppDataDir, "aibrowser", "service");
+  const wrapperDir = path.win32.join(localAppDataDir, "browser-cli", "service");
   return {
     serviceDir: null,
     serviceFile: null,
     logsDir: path.win32.join(wrapperDir, "logs"),
     wrapperDir,
-    wrapperConfigFile: path.win32.join(wrapperDir, "aibrowser.xml"),
-    wrapperExecutable: path.win32.join(wrapperDir, "aibrowser-service.exe"),
+    wrapperConfigFile: path.win32.join(wrapperDir, "browser-cli.xml"),
+    wrapperExecutable: path.win32.join(wrapperDir, "browser-cli-service.exe"),
   };
 }
 
@@ -95,7 +95,7 @@ export function resolveDaemonCommand(params?: {
     return {
       command: params.daemonBin.trim(),
       args: ["run"],
-      displayCommand: "aibrowserd run",
+      displayCommand: "browser-clid run",
     };
   }
 
@@ -107,6 +107,6 @@ export function resolveDaemonCommand(params?: {
   return {
     command: params?.runtimeExecutable?.trim() || process.execPath,
     args: ["run", daemonEntry, "run"],
-    displayCommand: "aibrowserd run",
+    displayCommand: "browser-clid run",
   };
 }

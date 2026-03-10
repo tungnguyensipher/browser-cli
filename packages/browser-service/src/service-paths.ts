@@ -12,12 +12,12 @@ function trimToUndefined(value: unknown): string | undefined {
 }
 
 export function resolveServiceRootDir(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()) {
-  const explicit = trimToUndefined(env.AIBROWSER_STATE_DIR);
+  const explicit = trimToUndefined(env.BROWSER_CLI_STATE_DIR);
   if (explicit) {
     return path.resolve(cwd, explicit);
   }
   const configPath = resolveRuntimeConfigPath(env, cwd);
-  return path.join(path.dirname(configPath), ".aibrowser");
+  return path.join(path.dirname(configPath), ".browser-cli");
 }
 
 export function ensureDirectory(dirPath: string): string {
@@ -52,7 +52,7 @@ export function resolveTempDir(
   env: NodeJS.ProcessEnv = process.env,
   cwd = process.cwd(),
 ): string {
-  const explicit = trimToUndefined(env.AIBROWSER_TMP_DIR);
+  const explicit = trimToUndefined(env.BROWSER_CLI_TMP_DIR);
   if (explicit) {
     return ensureDirectory(path.resolve(cwd, explicit));
   }

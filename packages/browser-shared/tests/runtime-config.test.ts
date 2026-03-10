@@ -7,7 +7,7 @@ import { loadRuntimeConfig, resolveRuntimeConfigPath, resolveRuntimeConfigFromEn
 const tempDirs: string[] = [];
 
 function createTempDir(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aibrowser-runtime-config-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "browser-cli-runtime-config-"));
   tempDirs.push(dir);
   return dir;
 }
@@ -23,13 +23,13 @@ afterEach(() => {
 
 describe("runtime config", () => {
   it("resolves the default local config path", () => {
-    expect(resolveRuntimeConfigPath({}, "/tmp/aibrowser")).toBe("/tmp/aibrowser/aibrowser.config.json");
+    expect(resolveRuntimeConfigPath({}, "/tmp/browser-cli")).toBe("/tmp/browser-cli/browser-cli.config.json");
   });
 
   it("loads a local config file and lets env override top-level and nested browser values", () => {
     const cwd = createTempDir();
     fs.writeFileSync(
-      path.join(cwd, "aibrowser.config.json"),
+      path.join(cwd, "browser-cli.config.json"),
       JSON.stringify(
         {
           bindHost: "127.0.0.1",
@@ -60,20 +60,20 @@ describe("runtime config", () => {
 
     const config = loadRuntimeConfig(
       {
-        AIBROWSER_BIND_HOST: "0.0.0.0",
-        AIBROWSER_OUTPUT_DIR: "./from-env/output",
-        AIBROWSER_AUTH_TOKEN: "env-token",
-        AIBROWSER_DEFAULT_PROFILE: "from-env",
-        AIBROWSER_CONTROL_PORT: "19999",
-        AIBROWSER_RELAY_BIND_HOST: "0.0.0.0",
-        AIBROWSER_BROWSER_PROFILES: JSON.stringify({
+        BROWSER_CLI_BIND_HOST: "0.0.0.0",
+        BROWSER_CLI_OUTPUT_DIR: "./from-env/output",
+        BROWSER_CLI_AUTH_TOKEN: "env-token",
+        BROWSER_CLI_DEFAULT_PROFILE: "from-env",
+        BROWSER_CLI_CONTROL_PORT: "19999",
+        BROWSER_CLI_RELAY_BIND_HOST: "0.0.0.0",
+        BROWSER_CLI_BROWSER_PROFILES: JSON.stringify({
           fromEnv: {
             color: "#222222",
             driver: "openclaw",
             attachOnly: true,
           },
         }),
-        AIBROWSER_ALLOWED_HOSTNAMES: "env.example, second.example",
+        BROWSER_CLI_ALLOWED_HOSTNAMES: "env.example, second.example",
       },
       cwd,
     );
@@ -98,14 +98,14 @@ describe("runtime config", () => {
     expect(config.browser?.ssrfPolicy?.allowedHostnames).toEqual(["env.example", "second.example"]);
   });
 
-  it("falls back to legacy gateway auth env for standalone auth resolution", () => {
+  it("reads Browser CLI auth values from env without legacy gateway fallback", () => {
     const config = resolveRuntimeConfigFromEnv({
-      OPENCLAW_GATEWAY_TOKEN: "legacy-token",
-      AIBROWSER_AUTH_PASSWORD: "secret-password",
+      BROWSER_CLI_AUTH_TOKEN: "env-token",
+      BROWSER_CLI_AUTH_PASSWORD: "secret-password",
     });
 
     expect(config.auth).toEqual({
-      token: "legacy-token",
+      token: "env-token",
       password: "secret-password",
     });
   });
