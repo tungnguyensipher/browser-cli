@@ -1,18 +1,13 @@
+#!/usr/bin/env node
+
+import {
+  startBrowserControlServerFromConfig,
+  stopBrowserControlServer,
+} from "@aibrowser/browser-service";
 import { Command } from "commander";
 
-type BrowserServiceModule = {
-  startBrowserControlServerFromConfig: () => Promise<{ port: number } | null>;
-  stopBrowserControlServer: () => Promise<void>;
-};
-
-async function loadBrowserServiceModule(): Promise<BrowserServiceModule> {
-  const serviceModuleUrl = new URL("../../browser-service/src/server.ts", import.meta.url).href;
-  return (await import(serviceModuleUrl)) as BrowserServiceModule;
-}
-
 export async function runDaemon(): Promise<void> {
-  const service = await loadBrowserServiceModule();
-  const state = await service.startBrowserControlServerFromConfig();
+  const state = await startBrowserControlServerFromConfig();
   if (!state) {
     throw new Error("Browser control service is disabled or failed to start.");
   }
@@ -32,7 +27,7 @@ export async function runDaemon(): Promise<void> {
     };
 
     const onSignal = () => {
-      void service.stopBrowserControlServer()
+      void stopBrowserControlServer()
         .catch(() => {})
         .finally(finish);
     };

@@ -1,7 +1,8 @@
 import path from "node:path";
 import { describe, expect, it } from "bun:test";
 
-const daemonEntry = path.resolve(process.cwd(), "packages/browser-cli/src/aibrowserd.ts");
+const daemonEntry = new URL("./aibrowserd.ts", import.meta.url).pathname;
+const packageDir = path.resolve(path.dirname(daemonEntry), "..");
 
 describe("browser service shared helpers", () => {
   it("resolves service names, service paths, and daemon commands for each supported OS", async () => {
@@ -92,7 +93,7 @@ describe("aibrowserd", () => {
   it("exposes a foreground run command", () => {
     const result = Bun.spawnSync({
       cmd: ["bun", "run", daemonEntry, "--help"],
-      cwd: process.cwd(),
+      cwd: packageDir,
       env: process.env,
       stdout: "pipe",
       stderr: "pipe",

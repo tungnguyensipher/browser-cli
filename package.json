@@ -1,18 +1,27 @@
 {
   "name": "aibrowser-runtime",
   "private": true,
+  "version": "0.0.0",
+  "license": "MIT",
   "type": "module",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "build": "bun run --filter '@aibrowser/*' build",
-    "typecheck": "bun run --filter '@aibrowser/*' typecheck",
-    "test": "bun run --filter '@aibrowser/*' test"
+    "build": "bun run --filter '@aibrowser/*' --filter '@tungthedev/browser-cli' build",
+    "typecheck": "bun run --filter '@aibrowser/*' --filter '@tungthedev/browser-cli' typecheck",
+    "test": "bun run --filter '@aibrowser/*' --filter '@tungthedev/browser-cli' test",
+    "version:check": "node ./scripts/workspace-version.mjs check",
+    "version:set": "node ./scripts/workspace-version.mjs set",
+    "version:bump": "node ./scripts/workspace-version.mjs bump",
+    "version:bump:patch": "node ./scripts/workspace-version.mjs bump patch",
+    "version:bump:minor": "node ./scripts/workspace-version.mjs bump minor",
+    "version:bump:major": "node ./scripts/workspace-version.mjs bump major"
   },
   "devDependencies": {
     "@types/node": "^25.3.5",
     "@types/ws": "^8.18.1",
+    "tsdown": "^0.16.6",
     "typescript": "^5.9.3"
   }
 }

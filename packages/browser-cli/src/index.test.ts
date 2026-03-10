@@ -1,12 +1,12 @@
 import path from "node:path";
 import { describe, expect, it } from "bun:test";
 
-const cliEntry = path.resolve(process.cwd(), "packages/browser-cli/src/index.ts");
+const cliEntry = new URL("./index.ts", import.meta.url).pathname;
 
 function runCliHelp(args: string[]) {
   return Bun.spawnSync({
     cmd: ["bun", "run", cliEntry, ...args, "--help"],
-    cwd: process.cwd(),
+    cwd: path.resolve(path.dirname(cliEntry), ".."),
     stdout: "pipe",
     stderr: "pipe",
     env: process.env,

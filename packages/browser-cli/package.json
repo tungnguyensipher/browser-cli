@@ -1,25 +1,40 @@
 {
-  "name": "@aibrowser/browser-cli",
+  "name": "@tungthedev/browser-cli",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
+  "description": "Standalone browser runtime CLI and daemon for AIBrowser",
+  "license": "MIT",
   "type": "module",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "bin": {
-    "aibrowser": "./dist/index.js",
-    "aibrowserd": "./dist/aibrowserd.js"
+    "aibrowser": "./dist/index.mjs",
+    "aibrowserd": "./dist/aibrowserd.mjs"
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsdown",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "bun test"
   },
   "dependencies": {
-    "@aibrowser/browser-client": "workspace:*",
-    "commander": "^14.0.3"
+    "commander": "^14.0.3",
+    "express": "^5.1.0",
+    "ipaddr.js": "^2.3.0",
+    "playwright-core": "1.58.2",
+    "sharp": "^0.34.5",
+    "undici": "^7.22.0",
+    "ws": "^8.19.0",
+    "zod": "^4.3.6"
   }
 }

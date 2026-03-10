@@ -9,6 +9,6 @@
   "scripts": {
     "build": "bun --version",
     "typecheck": "bun --version",
-    "test": "bun test"
+    "test": "node --check background.js && node --check options.js && node --check options-validation.js"
   }
 }

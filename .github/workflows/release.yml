@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.gate.outputs.should_release }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - id: version
+        name: Read root version
+        run: |
+          VERSION="$(node -e "console.log(JSON.parse(require('node:fs').readFileSync('package.json','utf8')).version)")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - id: gate
+        name: Decide whether to release
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PREV_VERSION="$(git show HEAD^:package.json 2>/dev/null | node -e "let data='';process.stdin.on('data',chunk=>data+=chunk);process.stdin.on('end',()=>{try{console.log(JSON.parse(data).version || '')}catch{console.log('')}})")"
+          CUR_VERSION="${{ steps.version.outputs.version }}"
+
+          if [ -n "$CUR_VERSION" ] && [ "$CUR_VERSION" != "$PREV_VERSION" ]; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: release-gate
+    if: needs.release-gate.outputs.should_release == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.8"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check workspace versions
+        run: bun run version:check
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun run test
+
+      - name: Build
+        run: bun run build
+
+      - name: Package dry run
+        working-directory: packages/browser-cli
+        run: npm pack --dry-run
+
+      - id: npm-check
+        name: Check whether version is already published
+        run: |
+          PACKAGE_NAME="@tungthedev/browser-cli"
+          VERSION="${{ needs.release-gate.outputs.version }}"
+          if npm view "${PACKAGE_NAME}@${VERSION}" version >/dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: steps.npm-check.outputs.already_published != 'true'
+        working-directory: packages/browser-cli
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Report existing publish
+        if: steps.npm-check.outputs.already_published == 'true'
+        run: echo "@tungthedev/browser-cli@${{ needs.release-gate.outputs.version }} is already published; skipping."

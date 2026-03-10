@@ -8,10 +8,16 @@
   "include": [
     "src/**/*.ts",
     "../browser-client/src/**/*.ts",
+    "../browser-engine-playwright/src/**/*.ts",
+    "../browser-relay/src/**/*.ts",
+    "../browser-service/src/**/*.ts",
     "../browser-shared/src/**/*.ts"
   ],
   "exclude": [
     "src/**/*.test.ts",
-    "../browser-client/src/**/*.test.ts"
+    "../browser-client/src/**/*.test.ts",
+    "../browser-engine-playwright/src/**/*.test.ts",
+    "../browser-relay/src/**/*.test.ts",
+    "../browser-service/src/**/*.test.ts"
   ]
 }
