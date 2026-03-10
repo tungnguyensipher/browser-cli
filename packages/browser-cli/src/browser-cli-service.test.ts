@@ -121,7 +121,7 @@ describe("browser service commands", () => {
     ]);
   });
 
-  it("installs a Windows service by copying WinSW, writing XML, and invoking install", async () => {
+  it("installs a Windows service using explicit --winsw-exe path", async () => {
     const { createBrowserServiceController } = await import("./browser-cli-service.js");
     const { deps, copyCalls, execCalls, mkdirCalls, writeCalls } = createDeps();
     const controller = createBrowserServiceController(deps);
@@ -158,6 +158,44 @@ describe("browser service commands", () => {
         args: ["install"],
       },
     ]);
+  });
+
+  it("throws when installing on Windows without bundled WinSW or explicit path", async () => {
+    const { createBrowserServiceController } = await import("./browser-cli-service.js");
+    const { deps } = createDeps();
+    const controller = createBrowserServiceController(deps);
+
+    // Simulate Windows platform with unsupported architecture to trigger the bundled check failure
+    const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform");
+    const originalArch = Object.getOwnPropertyDescriptor(process, "arch");
+    Object.defineProperty(process, "platform", {
+      value: "win32",
+    });
+    Object.defineProperty(process, "arch", {
+      value: "mips", // Unsupported architecture
+    });
+
+    try {
+      await controller.install({
+        platform: "windows",
+        localAppDataDir: "C:\\Users\\tester\\AppData\\Local",
+        daemonCommand: {
+          command: "C:\\Program Files\\Bun\\bun.exe",
+          args: ["run", "C:\\repo\\packages\\browser-cli\\src\\browser-clid.ts", "run"],
+          displayCommand: "browser-clid run",
+        },
+        env: {},
+        workingDirectory: "C:\\repo",
+        // No winswExecutableSource provided
+      });
+
+      throw new Error("Should have thrown");
+    } catch (error) {
+      expect(error.message).toContain("WinSW executable not found");
+    } finally {
+      Object.defineProperty(process, "platform", originalPlatform!);
+      Object.defineProperty(process, "arch", originalArch!);
+    }
   });
 
   it("reports service status through the platform-specific manager", async () => {
@@ -335,5 +373,61 @@ describe("browser service commands", () => {
         args: ["restart"],
       },
     ]);
+  });
+});
+
+describe("resolveBundledWinSwPath", () => {
+  it("returns null on non-Windows platforms", async () => {
+    const { resolveBundledWinSwPath } = await import("./browser-cli-service.js");
+
+    // Save original platform
+    const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform");
+
+    // Test non-Windows platforms
+    for (const platform of ["darwin", "linux", "freebsd"]) {
+      Object.defineProperty(process, "platform", {
+        value: platform,
+      });
+
+      expect(resolveBundledWinSwPath()).toBeNull();
+    }
+
+    // Restore original platform
+    Object.defineProperty(process, "platform", originalPlatform!);
+  });
+
+  it("returns null for unsupported architectures on Windows", async () => {
+    const { resolveBundledWinSwPath } = await import("./browser-cli-service.js");
+
+    const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform");
+    const originalArch = Object.getOwnPropertyDescriptor(process, "arch");
+
+    Object.defineProperty(process, "platform", { value: "win32" });
+    Object.defineProperty(process, "arch", { value: "mips" });
+
+    expect(resolveBundledWinSwPath()).toBeNull();
+
+    Object.defineProperty(process, "platform", originalPlatform!);
+    Object.defineProperty(process, "arch", originalArch!);
+  });
+
+  it("returns a path for supported Windows architectures", async () => {
+    const { resolveBundledWinSwPath } = await import("./browser-cli-service.js");
+
+    const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform");
+    const originalArch = Object.getOwnPropertyDescriptor(process, "arch");
+
+    Object.defineProperty(process, "platform", { value: "win32" });
+
+    for (const arch of ["x64", "x86", "arm64"]) {
+      Object.defineProperty(process, "arch", { value: arch });
+
+      const result = resolveBundledWinSwPath();
+      expect(result).not.toBeNull();
+      expect(result).toContain(`winsw-${arch}.exe`);
+    }
+
+    Object.defineProperty(process, "platform", originalPlatform!);
+    Object.defineProperty(process, "arch", originalArch!);
   });
 });

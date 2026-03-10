@@ -88,7 +88,9 @@ afterEach(() => {
 describe("browser cli option resolution", () => {
   it("uses local defaults when flags and project config are omitted", async () => {
     delete process.env.BROWSER_CLI_AUTH_TOKEN;
+    // Use a non-existent machine auth path to test default behavior
     const cwd = makeTempDir();
+    process.env.BROWSER_CLI_MACHINE_AUTH_PATH = path.join(cwd, "non-existent-auth.json");
 
     const result = await runStatus(["status"], cwd);
 

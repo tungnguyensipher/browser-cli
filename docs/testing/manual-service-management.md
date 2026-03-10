@@ -105,12 +105,20 @@ Notes:
 
 ## Windows with WinSW wrapper
 
-Windows service support uses a WinSW wrapper executable. Provide the wrapper path during install:
+Windows service support uses a bundled WinSW wrapper executable (x64, x86, ARM64).
+
+Install:
 
 ```powershell
 $env:BROWSER_CLI_AUTH_TOKEN="private-token"
 $env:BROWSER_CLI_CONTROL_PORT="18888"
-bun run packages/browser-cli/src/index.ts service install --winsw-exe "D:\tools\winsw.exe"
+browser-cli service install
+```
+
+To use a custom WinSW executable:
+
+```powershell
+browser-cli service install --winsw-exe "D:\tools\winsw.exe"
 ```
 
 Generated files:
@@ -122,15 +130,16 @@ Generated files:
 Lifecycle:
 
 ```powershell
-bun run packages/browser-cli/src/index.ts service status
-bun run packages/browser-cli/src/index.ts service start
-bun run packages/browser-cli/src/index.ts service stop
-bun run packages/browser-cli/src/index.ts service restart
-bun run packages/browser-cli/src/index.ts service uninstall
+browser-cli service status
+browser-cli service start
+browser-cli service stop
+browser-cli service restart
+browser-cli service uninstall
 ```
 
 Notes:
 
-- Install copies the provided WinSW executable into the managed service directory.
+- WinSW is bundled with the package for x64, x86, and ARM64 architectures.
+- Install copies the appropriate WinSW executable into the managed service directory.
 - The wrapper then manages `browser-clid` as a Windows service.
-- This avoids needing a custom native Windows service host in this repo.
+- Use `--winsw-exe` to override with a specific WinSW version.

@@ -1,8 +1,10 @@
 import fs from "node:fs/promises";
+import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import type { Command } from "commander";
+import { writeMachineBrowserControlAuth } from "@aibrowser/browser-shared";
 import { danger, info } from "./globals.js";
 import { defaultRuntime } from "./runtime.js";
 import type { BrowserParentOpts } from "./browser-cli-shared.js";
@@ -20,6 +22,30 @@ import {
 import { runCommandWithRuntime } from "./cli-utils.js";
 
 const execFileAsync = promisify(execFile);
+
+/**
+ * Resolve the bundled WinSW executable path for the current architecture.
+ * Returns null if no bundled executable is available for this platform.
+ */
+export function resolveBundledWinSwPath(): string | null {
+  // Only Windows platforms have bundled WinSW
+  if (process.platform !== "win32") {
+    return null;
+  }
+
+  const arch = process.arch;
+  const supportedArchs = ["x64", "x86", "arm64"];
+
+  if (!supportedArchs.includes(arch)) {
+    return null;
+  }
+
+  // Resolve relative to this file's location in dist/
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const winswPath = path.join(__dirname, "..", "vendor", "winsw", `winsw-${arch}.exe`);
+
+  return winswPath;
+}
 
 type CommandResult = {
   code: number;
@@ -43,7 +69,8 @@ export type BrowserServiceInstallParams = {
   daemonCommand?: DaemonCommand;
   daemonBin?: string;
   daemonEntry?: string;
-  runtimeExecutable?: string;
+  /** Runtime: "node" | "bun" | custom path (default: "node") */
+  runtime?: string;
   env?: Record<string, string>;
   workingDirectory: string;
   winswExecutableSource?: string;
@@ -103,17 +130,33 @@ function normalizeServicePlatform(platform?: ServicePlatform): ServicePlatform {
   return platform ?? (process.platform === "darwin" ? "launchd" : process.platform === "linux" ? "systemd" : "windows");
 }
 
-function resolveManagedEnv(env?: Record<string, string>): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(env ?? process.env)
+/**
+ * Resolve environment variables to include in the service configuration.
+ * Excludes BROWSER_CLI_AUTH_TOKEN as it should be stored in ~/.browser-cli/auth.json instead.
+ */
+function resolveManagedEnv(env?: Record<string, string>): {
+  env: Record<string, string>;
+  authToken: string | undefined;
+} {
+  const source = env ?? process.env;
+  const authToken = source.BROWSER_CLI_AUTH_TOKEN?.trim();
+
+  const managedEnv = Object.fromEntries(
+    Object.entries(source)
       .filter(([key, value]) => {
         if (!value) {
+          return false;
+        }
+        // Exclude auth token - it goes in auth.json instead
+        if (key === "BROWSER_CLI_AUTH_TOKEN") {
           return false;
         }
         return key.startsWith("BROWSER_CLI_");
       })
       .map(([key, value]) => [key, String(value)]),
   );
+
+  return { env: managedEnv, authToken };
 }
 
 function resolveInstallDaemonCommand(params: BrowserServiceInstallParams): DaemonCommand {
@@ -154,15 +197,26 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
   const deps = { ...defaultDeps(), ...rawDeps } as BrowserServiceDeps;
 
   return {
-    async install(params: BrowserServiceInstallParams): Promise<{ platform: ServicePlatform }> {
+    async install(params: BrowserServiceInstallParams): Promise<{ platform: ServicePlatform; authWritten: boolean }> {
       const platform = normalizeServicePlatform(params.platform);
       const paths = resolveServicePaths({
         platform,
         homeDir: params.homeDir,
         localAppDataDir: params.localAppDataDir,
       });
-      const daemon = resolveInstallDaemonCommand(params);
-      const env = resolveManagedEnv(params.env);
+
+      // Resolve runtime executable (node/bun/custom path)
+      const runtimeExecutable = await resolveRuntimeExecutable(params.runtime, deps);
+
+      const daemon = resolveInstallDaemonCommand({ ...params, runtimeExecutable });
+      const { env, authToken } = resolveManagedEnv(params.env);
+
+      // Write auth token to machine auth file instead of embedding in service config
+      let authWritten = false;
+      if (authToken) {
+        writeMachineBrowserControlAuth({ token: authToken });
+        authWritten = true;
+      }
 
       if (platform === "launchd") {
         if (!paths.serviceDir || !paths.serviceFile) {
@@ -187,7 +241,7 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
           `gui/${deps.getUid()}`,
           paths.serviceFile,
         ]), "launchctl bootstrap");
-        return { platform };
+        return { platform, authWritten };
       }
 
       if (platform === "systemd") {
@@ -211,18 +265,27 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
           await deps.run("systemctl", ["--user", "enable", "--now", "browser-cli.service"]),
           "systemctl enable --now browser-cli.service",
         );
-        return { platform };
+        return { platform, authWritten };
       }
 
-      if (!params.winswExecutableSource?.trim()) {
-        throw new Error("winswExecutableSource is required for Windows service install");
+      // Resolve WinSW executable source: explicit path > bundled > error
+      let winswSource = params.winswExecutableSource?.trim();
+      if (!winswSource) {
+        const bundled = resolveBundledWinSwPath();
+        if (!bundled) {
+          throw new Error(
+            "WinSW executable not found. Please provide --winsw-exe or use a supported architecture (x64, x86, arm64)."
+          );
+        }
+        winswSource = bundled;
       }
+
       if (!paths.wrapperDir || !paths.wrapperConfigFile || !paths.wrapperExecutable) {
         throw new Error("windows wrapper paths are unavailable");
       }
       await deps.mkdir(paths.wrapperDir);
       await deps.mkdir(paths.logsDir);
-      await deps.copyFile(params.winswExecutableSource.trim(), paths.wrapperExecutable);
+      await deps.copyFile(winswSource, paths.wrapperExecutable);
       await deps.writeFile(
         paths.wrapperConfigFile,
         renderWinSwXml({
@@ -237,7 +300,7 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
         }),
       );
       assertCommandSucceeded(await deps.run(paths.wrapperExecutable, ["install"]), "winsw install");
-      return { platform };
+      return { platform, authWritten };
     },
 
     async uninstall(params: BrowserServiceTargetParams): Promise<{ platform: ServicePlatform }> {
@@ -418,8 +481,55 @@ function printServiceResult(parent: BrowserParentOpts, payload: unknown) {
   return false;
 }
 
-function resolveDefaultDaemonEntry() {
-  return fileURLToPath(new URL("./browser-clid.ts", import.meta.url));
+function resolveDefaultDaemonEntry(): string {
+  // Use compiled .mjs if available (production), otherwise fall back to .ts (development)
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const mjsPath = path.join(__dirname, "browser-clid.mjs");
+  const tsPath = path.join(__dirname, "browser-clid.ts");
+
+  // Check if .mjs exists (built version)
+  try {
+    if (require("fs").existsSync(mjsPath)) {
+      return mjsPath;
+    }
+  } catch {
+    // ignore
+  }
+
+  return tsPath;
+}
+
+/**
+ * Resolve runtime executable path.
+ * - If runtime is undefined/null/"node": returns "node" (default, for service use)
+ * - If runtime is "bun": auto-detects bun path from shell
+ * - If runtime is a path: returns as-is
+ */
+async function resolveRuntimeExecutable(
+  runtime: string | undefined,
+  deps: Pick<BrowserServiceDeps, "run">,
+): Promise<string> {
+  // Default: node (for services - uses shebang #!/usr/bin/env node)
+  if (!runtime || runtime === "node") {
+    return "node";
+  }
+
+  // Auto-detect bun path from shell
+  if (runtime === "bun") {
+    const result = await deps.run("which", ["bun"]);
+    if (result.code === 0 && result.stdout.trim()) {
+      return result.stdout.trim();
+    }
+    // Fallback to common bun location
+    const homeDir = process.env.HOME ?? process.env.USERPROFILE;
+    if (homeDir) {
+      return `${homeDir}/.bun/bin/bun`;
+    }
+    return "bun";
+  }
+
+  // Custom path provided
+  return runtime;
 }
 
 export function registerBrowserServiceCommands(
@@ -432,7 +542,14 @@ export function registerBrowserServiceCommands(
   service
     .command("install")
     .description("Install the browser control service into the OS service manager")
-    .option("--winsw-exe <path>", "Path to the WinSW wrapper executable for Windows installs")
+    .option(
+      "--winsw-exe <path>",
+      "Use a custom WinSW executable instead of the bundled version (Windows only)"
+    )
+    .option(
+      "--runtime <runtime>",
+      "Runtime to use: 'node' (default), 'bun' (auto-detect), or a custom path"
+    )
     .action(async (opts, cmd) => {
       const parent = parentOpts(cmd);
       await runServiceCommand(async () => {
@@ -440,13 +557,16 @@ export function registerBrowserServiceCommands(
           workingDirectory: process.cwd(),
           winswExecutableSource: opts.winswExe,
           daemonEntry: resolveDefaultDaemonEntry(),
-          runtimeExecutable: process.execPath,
+          runtime: opts.runtime,
           env: process.env as Record<string, string>,
         });
         if (printServiceResult(parent, result)) {
           return;
         }
-        defaultRuntime.log(info(`installed ${result.platform} service for browser-clid`));
+        const authMsg = result.authWritten
+          ? " (auth token saved to ~/.browser-cli/auth.json)"
+          : "";
+        defaultRuntime.log(info(`installed ${result.platform} service for browser-clid${authMsg}`));
       });
     });
 
