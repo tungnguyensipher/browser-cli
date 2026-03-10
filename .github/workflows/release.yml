@@ -50,6 +50,10 @@ jobs:
     needs: release-gate
     if: needs.release-gate.outputs.should_release == 'true'
 
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -96,8 +100,6 @@ jobs:
         if: steps.npm-check.outputs.already_published != 'true'
         working-directory: packages/browser-cli
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Report existing publish
         if: steps.npm-check.outputs.already_published == 'true'

@@ -34,7 +34,8 @@ export function resolveBundledWinSwPath(): string | null {
   }
 
   const arch = process.arch;
-  const supportedArchs = ["x64", "x86", "arm64"];
+  // Note: arm64 not bundled (WinSW v2 doesn't provide arm64 builds)
+  const supportedArchs = ["x64", "x86"];
 
   if (!supportedArchs.includes(arch)) {
     return null;

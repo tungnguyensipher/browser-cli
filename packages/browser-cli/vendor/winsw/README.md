@@ -6,8 +6,9 @@ This directory contains WinSW executables bundled with the browser-cli package f
 
 - `winsw-x64.exe` - 64-bit Intel/AMD processors
 - `winsw-x86.exe` - 32-bit Intel/AMD processors
-- `winsw-arm64.exe` - ARM64 processors
 - `version.txt` - Version of bundled WinSW
+
+Note: ARM64 support will be added when WinSW v3 (with ARM64 builds) reaches stable release.
 
 ## Source
 

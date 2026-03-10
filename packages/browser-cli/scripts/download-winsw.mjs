@@ -18,7 +18,7 @@ const WINSW_BASE_URL = `https://github.com/winsw/winsw/releases/download/${WINSW
 const PLATFORMS = [
   { arch: "x64", filename: "WinSW-x64.exe" },
   { arch: "x86", filename: "WinSW-x86.exe" },
-  { arch: "arm64", filename: "WinSW-arm64.exe" },
+  // arm64 not available in v2.12.0, will be added when v3 is stable
 ];
 
 const OUTPUT_DIR = path.resolve(__dirname, "../vendor/winsw");
