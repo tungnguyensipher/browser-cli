@@ -10,7 +10,8 @@ coverage/
 .bun/
 
 # Browser runtime artifacts
-.aibrowser/
+.browser-cli.json
+.browser-cli/
 tmp/
 artifacts/
 downloads/

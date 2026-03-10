@@ -85,7 +85,6 @@ Project config file (`.browser-cli.json`):
 ```json
 {
   "baseUrl": "http://127.0.0.1:18888",
-  "authToken": "optional-token",
   "browserProfile": "default",
   "json": true
 }
@@ -154,31 +153,21 @@ The extension connects to relay port `18889` for external browser control.
 
 More detail: [docs/testing/manual-browser-smoke.md](docs/testing/manual-browser-smoke.md)
 
+## Agent Skill
+
+This repo also ships a skill for operating `browser-cli`.
+
+Install it with the `skills` CLI:
+
+```bash
+npx skills add tungnguyensipher/browser-cli
+```
+
 ## Documentation
 
 - [Architecture Overview](docs/ARCHITECTURE.md) — System design, components, and data flow
 - [Manual Service Management](docs/testing/manual-service-management.md) — Service installation and lifecycle
 - [Manual Browser Smoke Tests](docs/testing/manual-browser-smoke.md) — End-to-end validation guide
-
-## Versioning and Release
-
-This repo keeps one shared version across the root and all workspace packages.
-
-Useful commands:
-
-```bash
-bun run version:check
-bun run version:set -- 0.1.0
-bun run version:bump:patch
-bun run version:bump:minor
-bun run version:bump:major
-```
-
-GitHub Actions:
-
-- CI runs install, version check, typecheck, test, build, and `npm pack --dry-run`
-- Release publishes `@tungthedev/browser-cli` when the root `package.json` version changes on `main`
-- Manual release reruns are supported through `workflow_dispatch`
 
 ## Attribution
 
