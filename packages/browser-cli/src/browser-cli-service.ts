@@ -160,13 +160,16 @@ function resolveManagedEnv(env?: Record<string, string>): {
   return { env: managedEnv, authToken };
 }
 
-function resolveInstallDaemonCommand(params: BrowserServiceInstallParams): DaemonCommand {
+function resolveInstallDaemonCommand(
+  params: BrowserServiceInstallParams,
+  runtimeExecutable: string,
+): DaemonCommand {
   return (
     params.daemonCommand ??
     resolveDaemonCommand({
       daemonBin: params.daemonBin,
       daemonEntry: params.daemonEntry,
-      runtimeExecutable: params.runtimeExecutable,
+      runtimeExecutable,
       mode: params.daemonBin ? "bin" : "source",
     })
   );
@@ -209,7 +212,7 @@ export function createBrowserServiceController(rawDeps?: Partial<BrowserServiceD
       // Resolve runtime executable (node/bun/custom path)
       const runtimeExecutable = await resolveRuntimeExecutable(params.runtime, deps);
 
-      const daemon = resolveInstallDaemonCommand({ ...params, runtimeExecutable });
+      const daemon = resolveInstallDaemonCommand(params, runtimeExecutable);
       const { env, authToken } = resolveManagedEnv(params.env);
 
       // Write auth token to machine auth file instead of embedding in service config
