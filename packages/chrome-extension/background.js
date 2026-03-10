@@ -768,6 +768,50 @@ function onDebuggerEvent(source, method, params) {
   }
 }
 
+async function refreshRelayTargetInfo(tabId, overrides = {}) {
+  const tab = tabs.get(tabId)
+  if (tab?.state !== 'connected' || !tab.sessionId || !tab.targetId) return
+
+  const targetInfo = {
+    targetId: tab.targetId,
+    type: 'page',
+  }
+
+  try {
+    const currentTab = await chrome.tabs.get(tabId)
+    if (typeof currentTab.url === 'string' && currentTab.url) {
+      targetInfo.url = currentTab.url
+    }
+    if (typeof currentTab.title === 'string' && currentTab.title) {
+      targetInfo.title = currentTab.title
+    }
+  } catch {
+    // Ignore stale tab lookups and fall back to known target id.
+  }
+
+  if (typeof overrides.url === 'string' && overrides.url) {
+    targetInfo.url = overrides.url
+  }
+  if (typeof overrides.title === 'string' && overrides.title) {
+    targetInfo.title = overrides.title
+  }
+
+  try {
+    sendToRelay({
+      method: 'forwardCDPEvent',
+      params: {
+        sessionId: tab.sessionId,
+        method: 'Target.targetInfoChanged',
+        params: {
+          targetInfo,
+        },
+      },
+    })
+  } catch {
+    // Relay may be down.
+  }
+}
+
 async function onDebuggerDetach(source, reason) {
   const tabId = source.tabId
   if (!tabId) return
@@ -931,7 +975,18 @@ chrome.webNavigation.onCompleted.addListener(({ tabId, frameId }) => void whenRe
   const tab = tabs.get(tabId)
   if (tab?.state === 'connected') {
     setBadge(tabId, relayWs && relayWs.readyState === WebSocket.OPEN ? 'on' : 'connecting')
+    void refreshRelayTargetInfo(tabId)
   }
+}))
+
+chrome.webNavigation.onCommitted.addListener(({ tabId, frameId, url }) => void whenReady(() => {
+  if (frameId !== 0) return
+  void refreshRelayTargetInfo(tabId, { url })
+}))
+
+chrome.webNavigation.onHistoryStateUpdated.addListener(({ tabId, frameId, url }) => void whenReady(() => {
+  if (frameId !== 0) return
+  void refreshRelayTargetInfo(tabId, { url })
 }))
 
 // Refresh badge when user switches to an attached tab.

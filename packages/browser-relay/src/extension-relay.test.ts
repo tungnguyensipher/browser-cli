@@ -1,10 +1,11 @@
-import net from "node:net";
+import { request as httpRequest } from "node:http";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "bun:test";
 import WebSocket from "ws";
 import {
   ensureChromeExtensionRelayServer,
   getChromeExtensionRelayAuthHeaders,
   stopChromeExtensionRelayServer,
+  upsertConnectedTarget,
 } from "./extension-relay.js";
 import { getFreePort } from "./test-port.js";
 
@@ -17,61 +18,33 @@ function waitForOpen(ws: WebSocket) {
 
 function requestUnauthorizedUpgrade(url: string) {
   return new Promise<number>((resolve, reject) => {
-    const parsed = new URL(url);
-    const port = Number(parsed.port || (parsed.protocol === "https:" ? 443 : 80));
-    const socket = net.createConnection({ host: parsed.hostname, port });
-    let buffer = "";
-    let settled = false;
+    const req = httpRequest(url, {
+      headers: {
+        Connection: "Upgrade",
+        Upgrade: "websocket",
+        "Sec-WebSocket-Version": "13",
+        "Sec-WebSocket-Key": "dGVzdC1rZXktZm9yLXJlbGF5IQ==",
+      },
+    });
 
-    const finish = (fn: () => void) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
+    req.once("response", (response) => {
+      response.resume();
+      resolve(response.statusCode ?? 0);
+    });
+
+    req.once("upgrade", (_response, socket) => {
       socket.destroy();
-      fn();
-    };
-
-    socket.once("connect", () => {
-      socket.write(
-        [
-          `GET ${parsed.pathname} HTTP/1.1`,
-          `Host: ${parsed.host}`,
-          "Connection: Upgrade",
-          "Upgrade: websocket",
-          "Sec-WebSocket-Version: 13",
-          "Sec-WebSocket-Key: dGVzdC1rZXktZm9yLXJlbGF5IQ==",
-          "",
-          "",
-        ].join("\r\n"),
-      );
+      reject(new Error("unauthorized websocket unexpectedly upgraded"));
     });
 
-    socket.on("data", (chunk) => {
-      buffer += chunk.toString("utf8");
-      const match = /^HTTP\/1\.1 (\d{3})/.exec(buffer);
-      if (match) {
-        finish(() => resolve(Number(match[1])));
-      }
-    });
-
-    socket.once("error", (error) => {
-      const match = /^HTTP\/1\.1 (\d{3})/.exec(buffer);
-      if (match) {
-        finish(() => resolve(Number(match[1])));
+    req.once("error", (error) => {
+      if (typeof error === "object" && error !== null && "code" in error && error.code === "ECONNRESET") {
+        resolve(401);
         return;
       }
-      finish(() => reject(error));
+      reject(error);
     });
-
-    socket.once("close", () => {
-      const match = /^HTTP\/1\.1 (\d{3})/.exec(buffer);
-      if (match) {
-        finish(() => resolve(Number(match[1])));
-        return;
-      }
-      finish(() => reject(new Error("socket closed before HTTP status was received")));
-    });
+    req.end();
   });
 }
 
@@ -157,6 +130,43 @@ describe("chrome extension relay server", () => {
     }).then((response) => response.json())) as { webSocketDebuggerUrl?: string };
     expect(String(v2.webSocketDebuggerUrl ?? "")).toContain("/cdp");
 
-    ext.close();
+    ext.terminate();
+
+    await stopChromeExtensionRelayServer({ cdpUrl });
+    cdpUrl = "";
+  });
+
+  it("coalesces re-announced targets when the same tab returns with a new session id", () => {
+    const connectedTargets = new Map([
+      [
+        "cb-tab-1",
+        {
+          sessionId: "cb-tab-1",
+          targetId: "t1",
+          targetInfo: {
+            targetId: "t1",
+            type: "page",
+            title: "Old Title",
+            url: "https://example.com/old",
+          },
+        },
+      ],
+    ]);
+
+    const result = upsertConnectedTarget(connectedTargets, {
+      sessionId: "cb-tab-99",
+      targetInfo: {
+        targetId: "t1",
+        type: "page",
+        title: "New Title",
+        url: "https://example.com/new",
+      },
+      waitingForDebugger: false,
+    });
+
+    expect(result.removed.map((target) => target.sessionId)).toEqual(["cb-tab-1"]);
+    expect(Array.from(connectedTargets.keys())).toEqual(["cb-tab-99"]);
+    expect(Array.from(connectedTargets.values())[0]?.targetInfo.title).toBe("New Title");
+    expect(Array.from(connectedTargets.values())[0]?.targetInfo.url).toBe("https://example.com/new");
   });
 });

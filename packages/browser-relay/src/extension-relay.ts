@@ -89,6 +89,33 @@ type ConnectedTarget = {
 const DEFAULT_EXTENSION_RECONNECT_GRACE_MS = 20_000;
 const DEFAULT_EXTENSION_COMMAND_RECONNECT_WAIT_MS = 3_000;
 
+export function upsertConnectedTarget(
+  connectedTargets: Map<string, ConnectedTarget>,
+  attached: AttachedToTargetEvent,
+): {
+  hadPrevious: boolean;
+  prevTargetId?: string;
+  changedTarget: boolean;
+  removed: ConnectedTarget[];
+} {
+  const prev = connectedTargets.get(attached.sessionId);
+  const nextTargetId = attached.targetInfo.targetId;
+  const prevTargetId = prev?.targetId;
+  const changedTarget = Boolean(prev && prevTargetId && prevTargetId !== nextTargetId);
+  const removed = Array.from(connectedTargets.values()).filter(
+    (target) => target.targetId === nextTargetId && target.sessionId !== attached.sessionId,
+  );
+  for (const stale of removed) {
+    connectedTargets.delete(stale.sessionId);
+  }
+  connectedTargets.set(attached.sessionId, {
+    sessionId: attached.sessionId,
+    targetId: nextTargetId,
+    targetInfo: attached.targetInfo,
+  });
+  return { hadPrevious: Boolean(prev), prevTargetId, changedTarget, removed };
+}
+
 function headerValue(value: string | string[] | undefined): string | undefined {
   if (!value) {
     return undefined;
@@ -171,6 +198,11 @@ function text(res: Duplex, status: number, bodyText: string) {
 
 function rejectUpgrade(socket: Duplex, status: number, bodyText: string) {
   text(socket, status, bodyText);
+  try {
+    socket.destroy();
+  } catch {
+    // ignore
+  }
 }
 
 function envMsOrDefault(name: string, fallback: number): number {
@@ -814,15 +846,13 @@ export async function ensureChromeExtensionRelayServer(opts: {
               return;
             }
             if (attached?.sessionId && attached?.targetInfo?.targetId) {
-              const prev = connectedTargets.get(attached.sessionId);
-              const nextTargetId = attached.targetInfo.targetId;
-              const prevTargetId = prev?.targetId;
-              const changedTarget = Boolean(prev && prevTargetId && prevTargetId !== nextTargetId);
-              connectedTargets.set(attached.sessionId, {
-                sessionId: attached.sessionId,
-                targetId: nextTargetId,
-                targetInfo: attached.targetInfo,
-              });
+              const { hadPrevious, prevTargetId, changedTarget, removed } = upsertConnectedTarget(
+                connectedTargets,
+                attached,
+              );
+              for (const stale of removed) {
+                broadcastDetachedTarget(stale, attached.targetInfo.targetId);
+              }
               if (changedTarget && prevTargetId) {
                 broadcastToCdpClients({
                   method: "Target.detachedFromTarget",
@@ -830,7 +860,7 @@ export async function ensureChromeExtensionRelayServer(opts: {
                   sessionId: attached.sessionId,
                 });
               }
-              if (!prev || changedTarget) {
+              if (!hadPrevious || changedTarget) {
                 broadcastToCdpClients({ method, params, sessionId });
               }
               return;
@@ -1039,6 +1069,12 @@ export async function ensureChromeExtensionRelayServer(opts: {
             // ignore
           }
         }
+        const closableServer = server as typeof server & {
+          closeIdleConnections?: () => void;
+          closeAllConnections?: () => void;
+        };
+        closableServer.closeIdleConnections?.();
+        closableServer.closeAllConnections?.();
         await new Promise<void>((resolve) => {
           server.close(() => resolve());
         });
