@@ -1,5 +1,8 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import fs from "node:fs";
 import type { IncomingMessage } from "node:http";
+import os from "node:os";
+import path from "node:path";
 import { isLoopbackHost } from "./network-security.js";
 import { loadRuntimeConfig, type RuntimeAuthConfig, type StandaloneRuntimeConfig } from "./runtime-config.js";
 
@@ -9,6 +12,9 @@ type RelayAuthHeaderResolver = (url: string) => Record<string, string>;
 let relayAuthHeaderResolver: RelayAuthHeaderResolver = () => ({});
 
 export type BrowserControlAuth = RuntimeAuthConfig;
+export type BrowserControlAuthResolveOptions = {
+  allowLegacyGatewayTokenFallback?: boolean;
+};
 
 function trimToUndefined(value: unknown): string | undefined {
   if (typeof value !== "string") {
@@ -57,19 +63,68 @@ function parseBasicPassword(authorization: string): string | undefined {
   }
 }
 
+export function resolveMachineBrowserControlAuthPath(
+  env: NodeJS.ProcessEnv = process.env,
+  homeDir = os.homedir(),
+): string {
+  const explicit = trimToUndefined(env.AIBROWSER_MACHINE_AUTH_PATH);
+  if (explicit) {
+    return path.resolve(homeDir, explicit);
+  }
+  return path.join(homeDir, ".aibrowser", "auth.json");
+}
+
+export function readMachineBrowserControlAuth(
+  env: NodeJS.ProcessEnv = process.env,
+  homeDir = os.homedir(),
+): BrowserControlAuth {
+  const authPath = resolveMachineBrowserControlAuthPath(env, homeDir);
+  if (!fs.existsSync(authPath)) {
+    return {};
+  }
+  const raw = fs.readFileSync(authPath, "utf8");
+  if (!raw.trim()) {
+    return {};
+  }
+  const parsed = JSON.parse(raw) as RuntimeAuthConfig;
+  const token = trimToUndefined(parsed?.token);
+  const password = trimToUndefined(parsed?.password);
+  return {
+    ...(token ? { token } : {}),
+    ...(password ? { password } : {}),
+  };
+}
+
+export function writeMachineBrowserControlAuth(
+  auth: BrowserControlAuth,
+  env: NodeJS.ProcessEnv = process.env,
+  homeDir = os.homedir(),
+): void {
+  const authPath = resolveMachineBrowserControlAuthPath(env, homeDir);
+  fs.mkdirSync(path.dirname(authPath), { recursive: true });
+  fs.writeFileSync(`${authPath}`, `${JSON.stringify(auth, null, 2)}\n`, "utf8");
+}
+
 export function resolveBrowserControlAuth(
   cfg?: StandaloneRuntimeConfig,
   env: NodeJS.ProcessEnv = process.env,
+  opts?: BrowserControlAuthResolveOptions,
 ): BrowserControlAuth {
   const runtimeConfig = cfg ?? loadRuntimeConfig(env);
+  const machineAuth = readMachineBrowserControlAuth(env);
   const token =
-    trimToUndefined(runtimeConfig.auth?.token) ??
     trimToUndefined(env.AIBROWSER_AUTH_TOKEN) ??
-    trimToUndefined(env.OPENCLAW_GATEWAY_TOKEN) ??
-    trimToUndefined(env.CLAWDBOT_GATEWAY_TOKEN);
+    trimToUndefined(runtimeConfig.auth?.token) ??
+    trimToUndefined(machineAuth.token) ??
+    (opts?.allowLegacyGatewayTokenFallback === false
+      ? undefined
+      : trimToUndefined(env.OPENCLAW_GATEWAY_TOKEN) ??
+        trimToUndefined(env.CLAWDBOT_GATEWAY_TOKEN));
   const password =
+    trimToUndefined(env.AIBROWSER_AUTH_PASSWORD) ??
     trimToUndefined(runtimeConfig.auth?.password) ??
-    trimToUndefined(env.AIBROWSER_AUTH_PASSWORD);
+    trimToUndefined(machineAuth.password) ??
+    undefined;
   return {
     ...(token ? { token } : {}),
     ...(password ? { password } : {}),

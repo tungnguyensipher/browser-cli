@@ -12,6 +12,7 @@ export type BrowserFetchInit = RequestInit & {
   baseUrl?: string;
   auth?: BrowserControlAuth;
   fetchFn?: typeof fetch;
+  suppressLoopbackAuthFallback?: boolean;
 };
 
 class BrowserServiceError extends Error {
@@ -76,7 +77,13 @@ function withLoopbackBrowserAuth(
     return { ...init, headers };
   }
 
-  const loopbackAuth = resolveBrowserControlAuth();
+  const loopbackAuth = resolveBrowserControlAuth(
+    init?.suppressLoopbackAuthFallback ? {} : undefined,
+    process.env,
+    {
+      allowLegacyGatewayTokenFallback: !init?.suppressLoopbackAuthFallback,
+    },
+  );
   if (loopbackAuth.token) {
     headers.set("Authorization", `Bearer ${loopbackAuth.token}`);
   } else if (loopbackAuth.password) {

@@ -56,6 +56,7 @@ function resolveFetchInit(
     ...(opts.baseUrl?.trim() ? { baseUrl: opts.baseUrl.trim() } : {}),
     ...(timeoutMs ? { timeoutMs } : {}),
     ...(authToken ? { auth: { token: authToken } } : {}),
+    suppressLoopbackAuthFallback: true,
   };
 }
 

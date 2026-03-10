@@ -133,6 +133,28 @@ describe("fetchBrowserJson", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("does not inject legacy gateway auth when loopback auth fallback is suppressed", async () => {
+    delete process.env.AIBROWSER_AUTH_TOKEN;
+    process.env.OPENCLAW_GATEWAY_TOKEN = "legacy-token";
+
+    const fetchMock = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      expect(headers.get("authorization")).toBeNull();
+      return new Response(JSON.stringify({ ok: true, tabs: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    await fetchBrowserJson<{ ok: true; tabs: [] }>("/tabs", {
+      // Added for CLI-only auth resolution where OPENCLAW_GATEWAY_TOKEN should not auto-fill.
+      suppressLoopbackAuthFallback: true,
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("aborts the request when the timeout elapses", async () => {
     const fetchMock = mock(
       (_input: RequestInfo | URL, init?: RequestInit) =>

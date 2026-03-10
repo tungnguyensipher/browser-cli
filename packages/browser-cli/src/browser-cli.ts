@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { resolveBrowserCliParentOpts } from "./browser-cli-options.js";
 import { registerBrowserActionInputCommands } from "./browser-cli-actions-input.js";
 import { registerBrowserActionObserveCommands } from "./browser-cli-actions-observe.js";
 import { registerBrowserDebugCommands } from "./browser-cli-debug.js";
@@ -18,7 +19,7 @@ export function registerBrowserCli(program: Command) {
     .option("--auth-token <token>", "Bearer token for the browser service")
     .option("--browser-profile <name>", "Browser profile name (default from config)");
 
-  const parentOpts = (cmd: Command) => cmd.optsWithGlobals() as BrowserParentOpts;
+  const parentOpts = (cmd: Command) => resolveBrowserCliParentOpts(cmd) as BrowserParentOpts;
 
   registerBrowserManageCommands(program, parentOpts);
   registerBrowserServiceCommands(program, parentOpts);

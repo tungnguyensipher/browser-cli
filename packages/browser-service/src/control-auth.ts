@@ -1,10 +1,11 @@
 import crypto from "node:crypto";
-import { resolveBrowserControlAuth, type BrowserControlAuth, type StandaloneRuntimeConfig } from "@aibrowser/browser-shared";
 import {
-  loadStandaloneConfig,
-  loadStandaloneConfigFile,
-  writeStandaloneConfigFile,
-} from "./runtime-config-store.js";
+  resolveBrowserControlAuth,
+  type BrowserControlAuth,
+  type StandaloneRuntimeConfig,
+  writeMachineBrowserControlAuth,
+} from "@aibrowser/browser-shared";
+import { loadStandaloneConfig, loadStandaloneConfigFile } from "./runtime-config-store.js";
 
 function shouldAutoGenerateBrowserAuth(env: NodeJS.ProcessEnv): boolean {
   const nodeEnv = (env.NODE_ENV ?? "").trim().toLowerCase();
@@ -46,14 +47,7 @@ export async function ensureBrowserControlAuth(params?: {
   }
 
   const generatedToken = crypto.randomBytes(24).toString("base64url");
-  const nextConfig: StandaloneRuntimeConfig = {
-    ...latestCfg,
-    auth: {
-      ...(latestCfg.auth ?? {}),
-      token: generatedToken,
-    },
-  };
-  await writeStandaloneConfigFile(nextConfig, env, cwd);
+  writeMachineBrowserControlAuth({ token: generatedToken }, env);
 
   return {
     auth: { token: generatedToken },
