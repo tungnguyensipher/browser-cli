@@ -27,7 +27,7 @@ browser-clid run
 
 1. **Start Browser**: `browser-cli start`
 2. **Open URL**: `browser-cli open <url>`
-3. **Snapshot**: `browser-cli snapshot --format ai --refs aria` (get element refs like `e1`, `e2`)
+3. **Snapshot**: `browser-cli snapshot --format ai --refs aria` (get element refs for interactions)
 4. **Interact**: Use refs to click or type
 5. **Re-snapshot**: After navigation or DOM changes, get fresh refs
 
@@ -54,8 +54,8 @@ browser-clid run
 | Command | Description |
 |---------|-------------|
 | `browser-cli snapshot --format ai --refs aria` | Get snapshot with AI-friendly output and ARIA refs |
-| `browser-cli snapshot --format ai --refs generated` | Use generated refs (e1, e2, ...) |
-| `browser-cli snapshot --full` | Full page snapshot |
+| `browser-cli snapshot --format ai --refs role` | Get snapshot with AI-friendly output and role refs |
+| `browser-cli screenshot --full-page` | Capture a full-page screenshot |
 
 ### Interaction (Use Refs from Snapshot)
 
@@ -64,7 +64,7 @@ browser-clid run
 | `browser-cli click <ref>` | Click element by ref |
 | `browser-cli type <ref> "text" --submit` | Type text and submit form |
 | `browser-cli press <key>` | Press a key (Enter, Escape, etc.) |
-| `browser-cli scroll` | Scroll page |
+| `browser-cli scroll-into-view <ref>` | Scroll an element into view |
 
 ### Capture and Debug
 
@@ -80,11 +80,11 @@ browser-clid run
 
 ```bash
 browser-cli open https://example.com/login
-browser-cli snapshot --format ai --refs generated
+browser-cli snapshot --format ai --refs aria
 # Parse refs from output, then:
-browser-cli type e5 "username"
-browser-cli type e6 "password"
-browser-cli click e7  # submit button
+browser-cli type <username-ref> "username"
+browser-cli type <password-ref> "password"
+browser-cli click <submit-ref>
 ```
 
 ### Taking Screenshots
@@ -97,10 +97,11 @@ browser-cli screenshot
 ### Working with Tabs
 
 ```bash
-browser-cli tabs                    # List tabs
-browser-cli click e3 --target tab   # Open in new tab
-browser-cli tabs                    # Get new tab ID
-browser-cli --target <id> snapshot  # Snapshot specific tab
+browser-cli tabs                                # List tabs
+browser-cli open https://example.com            # Open URL in a new tab
+browser-cli tabs                                # Get the new tab ID
+browser-cli focus <target-id>                   # Focus that tab if needed
+browser-cli snapshot --format ai --target-id <id>  # Snapshot specific tab
 ```
 
 ## Configuration
@@ -162,7 +163,7 @@ browser-cli service uninstall
 - **Refs are ephemeral** - They change when DOM updates
 - **Always re-snapshot after**: navigation, form submission, dynamic content loading
 - **Use `--refs aria`** for stable ARIA-based refs when available
-- **Use `--refs generated`** for numbered refs (e1, e2, ...)
+- **Use `--refs role`** for role-based refs in AI snapshots
 
 ## Security
 
