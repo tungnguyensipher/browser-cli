@@ -1,6 +1,6 @@
 {
   "name": "@tungthedev/browser-cli",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": false,
   "description": "Standalone browser runtime CLI and daemon for Browser CLI",
   "license": "MIT",
