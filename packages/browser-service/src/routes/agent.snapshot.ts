@@ -151,10 +151,17 @@ export function registerBrowserAgentSnapshotRoutes(
     const fullPage = toBoolean(body.fullPage) ?? false;
     const ref = toStringOrEmpty(body.ref) || undefined;
     const element = toStringOrEmpty(body.element) || undefined;
+    const annotate = toBoolean(body.annotate) ?? false;
     const type = body.type === "jpeg" ? "jpeg" : "png";
 
     if (fullPage && (ref || element)) {
       return jsonError(res, 400, "fullPage is not supported for element screenshots");
+    }
+    if (annotate && (ref || element)) {
+      return jsonError(res, 400, "annotate does not support ref or element screenshots");
+    }
+    if (annotate && fullPage) {
+      return jsonError(res, 400, "annotate does not support fullPage screenshots");
     }
 
     await withRouteTabContext({
@@ -163,6 +170,59 @@ export function registerBrowserAgentSnapshotRoutes(
       ctx,
       targetId,
       run: async ({ profileCtx, tab, cdpUrl }) => {
+        if (annotate) {
+          const pw = await requirePwAi(res, "annotated screenshot");
+          if (!pw) {
+            return;
+          }
+          const snap = await pw
+            .snapshotAiViaPlaywright({
+              cdpUrl,
+              targetId: tab.targetId,
+              maxChars: 80_000,
+            })
+            .catch(async (err: unknown) => {
+              if (String(err).toLowerCase().includes("_snapshotforai")) {
+                return await pw.snapshotRoleViaPlaywright({
+                  cdpUrl,
+                  targetId: tab.targetId,
+                });
+              }
+              throw err;
+            });
+          const labeled = await pw.screenshotWithLabelsViaPlaywright({
+            cdpUrl,
+            targetId: tab.targetId,
+            refs:
+              "refs" in snap && snap.refs && typeof snap.refs === "object"
+                ? snap.refs
+                : {},
+            type,
+          });
+          const normalized = await normalizeBrowserScreenshot(labeled.buffer, {
+            maxSide: DEFAULT_BROWSER_SCREENSHOT_MAX_SIDE,
+            maxBytes: DEFAULT_BROWSER_SCREENSHOT_MAX_BYTES,
+          });
+          await ensureMediaDir();
+          const saved = await saveMediaBuffer(
+            normalized.buffer,
+            normalized.contentType ?? `image/${type}`,
+            "browser",
+            DEFAULT_BROWSER_SCREENSHOT_MAX_BYTES,
+          );
+          const imageType = normalized.contentType?.includes("jpeg") ? "jpeg" : type;
+          return res.json({
+            ok: true,
+            targetId: tab.targetId,
+            url: tab.url,
+            labels: true,
+            labelsCount: labeled.labels,
+            labelsSkipped: labeled.skipped,
+            imagePath: path.resolve(saved.path),
+            imageType,
+          });
+        }
+
         let buffer: Buffer;
         const shouldUsePlaywright = shouldUsePlaywrightForScreenshot({
           profile: profileCtx.profile,

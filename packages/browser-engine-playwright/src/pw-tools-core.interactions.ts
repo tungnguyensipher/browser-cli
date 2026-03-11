@@ -15,6 +15,14 @@ type TargetOpts = {
   targetId?: string;
 };
 
+type ScreenshotLabelBox = {
+  ref: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
+
 async function getRestoredPageForTarget(opts: TargetOpts) {
   const page = await getPageForTargetId(opts);
   ensurePageState(page);
@@ -45,14 +53,71 @@ async function awaitEvalWithAbort<T>(
 export async function highlightViaPlaywright(opts: {
   cdpUrl: string;
   targetId?: string;
-  ref: string;
+  ref?: string;
+  selector?: string;
 }): Promise<void> {
   const page = await getRestoredPageForTarget(opts);
-  const ref = requireRef(opts.ref);
+  const ref = typeof opts.ref === "string" ? opts.ref.trim() : "";
+  const selector = typeof opts.selector === "string" ? opts.selector.trim() : "";
+  if ((ref ? 1 : 0) + (selector ? 1 : 0) !== 1) {
+    throw new Error("provide exactly one of ref or selector");
+  }
+  const locator = ref ? refLocator(page, requireRef(ref)) : page.locator(selector).first();
   try {
-    await refLocator(page, ref).highlight();
+    await locator.highlight();
   } catch (err) {
-    throw toAIFriendlyError(err, ref);
+    throw toAIFriendlyError(err, ref || selector);
+  }
+}
+
+export async function findViaPlaywright(opts: {
+  cdpUrl: string;
+  targetId?: string;
+  by: "role" | "text" | "label";
+  value: string;
+  action: "click" | "fill" | "type" | "hover" | "check" | "uncheck" | "text";
+  input?: string;
+  name?: string;
+}): Promise<{ text?: string | null } | void> {
+  const page = await getRestoredPageForTarget(opts);
+  const value = String(opts.value ?? "").trim();
+  const name = typeof opts.name === "string" ? opts.name.trim() : undefined;
+  if (!value) {
+    throw new Error("value is required");
+  }
+
+  const locAny = page as unknown as {
+    getByRole: (role: never, opts?: { name?: string }) => ReturnType<typeof page.getByText>;
+  };
+  const locator =
+    opts.by === "role"
+      ? locAny.getByRole(value as never, name ? { name } : undefined)
+      : opts.by === "text"
+        ? page.getByText(value)
+        : page.getByLabel(value);
+  const first = locator.first();
+
+  switch (opts.action) {
+    case "click":
+      await first.click();
+      return;
+    case "fill":
+      await first.fill(opts.input ?? "");
+      return;
+    case "type":
+      await first.type(opts.input ?? "");
+      return;
+    case "hover":
+      await first.hover();
+      return;
+    case "check":
+      await first.check();
+      return;
+    case "uncheck":
+      await first.uncheck();
+      return;
+    case "text":
+      return { text: await first.textContent() };
   }
 }
 
@@ -495,7 +560,7 @@ export async function screenshotWithLabelsViaPlaywright(opts: {
   }));
 
   const refs = Object.keys(opts.refs ?? {});
-  const boxes: Array<{ ref: string; x: number; y: number; w: number; h: number }> = [];
+  const boxes: ScreenshotLabelBox[] = [];
   let skipped = 0;
 
   for (const ref of refs) {
@@ -535,55 +600,7 @@ export async function screenshotWithLabelsViaPlaywright(opts: {
 
   try {
     if (boxes.length > 0) {
-      await page.evaluate((labels) => {
-        const existing = document.querySelectorAll("[data-openclaw-labels]");
-        existing.forEach((el) => el.remove());
-
-        const root = document.createElement("div");
-        root.setAttribute("data-openclaw-labels", "1");
-        root.style.position = "fixed";
-        root.style.left = "0";
-        root.style.top = "0";
-        root.style.zIndex = "2147483647";
-        root.style.pointerEvents = "none";
-        root.style.fontFamily =
-          '"SF Mono","SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace';
-
-        const clamp = (value: number, min: number, max: number) =>
-          Math.min(max, Math.max(min, value));
-
-        for (const label of labels) {
-          const box = document.createElement("div");
-          box.setAttribute("data-openclaw-labels", "1");
-          box.style.position = "absolute";
-          box.style.left = `${label.x}px`;
-          box.style.top = `${label.y}px`;
-          box.style.width = `${label.w}px`;
-          box.style.height = `${label.h}px`;
-          box.style.border = "2px solid #ffb020";
-          box.style.boxSizing = "border-box";
-
-          const tag = document.createElement("div");
-          tag.setAttribute("data-openclaw-labels", "1");
-          tag.textContent = label.ref;
-          tag.style.position = "absolute";
-          tag.style.left = `${label.x}px`;
-          tag.style.top = `${clamp(label.y - 18, 0, 20000)}px`;
-          tag.style.background = "#ffb020";
-          tag.style.color = "#1a1a1a";
-          tag.style.fontSize = "12px";
-          tag.style.lineHeight = "14px";
-          tag.style.padding = "1px 4px";
-          tag.style.borderRadius = "3px";
-          tag.style.boxShadow = "0 1px 2px rgba(0,0,0,0.35)";
-          tag.style.whiteSpace = "nowrap";
-
-          root.appendChild(box);
-          root.appendChild(tag);
-        }
-
-        document.documentElement.appendChild(root);
-      }, boxes);
+      await page.evaluate(applyScreenshotLabelOverlayInPage, boxes);
     }
 
     const buffer = await page.screenshot({ type });
@@ -596,6 +613,55 @@ export async function screenshotWithLabelsViaPlaywright(opts: {
       })
       .catch(() => {});
   }
+}
+
+export function applyScreenshotLabelOverlayInPage(labels: ScreenshotLabelBox[]): void {
+  const existing = document.querySelectorAll("[data-openclaw-labels]");
+  for (const node of existing) {
+    node.remove();
+  }
+
+  const root = document.createElement("div");
+  root.setAttribute("data-openclaw-labels", "1");
+  root.style.position = "fixed";
+  root.style.left = "0";
+  root.style.top = "0";
+  root.style.zIndex = "2147483647";
+  root.style.pointerEvents = "none";
+  root.style.fontFamily =
+    '"SF Mono","SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace';
+
+  for (const label of labels) {
+    const box = document.createElement("div");
+    box.setAttribute("data-openclaw-labels", "1");
+    box.style.position = "absolute";
+    box.style.left = `${label.x}px`;
+    box.style.top = `${label.y}px`;
+    box.style.width = `${label.w}px`;
+    box.style.height = `${label.h}px`;
+    box.style.border = "2px solid #ffb020";
+    box.style.boxSizing = "border-box";
+
+    const tag = document.createElement("div");
+    tag.setAttribute("data-openclaw-labels", "1");
+    tag.textContent = label.ref;
+    tag.style.position = "absolute";
+    tag.style.left = `${label.x}px`;
+    tag.style.top = `${Math.min(20000, Math.max(0, label.y - 18))}px`;
+    tag.style.background = "#ffb020";
+    tag.style.color = "#1a1a1a";
+    tag.style.fontSize = "12px";
+    tag.style.lineHeight = "14px";
+    tag.style.padding = "1px 4px";
+    tag.style.borderRadius = "3px";
+    tag.style.boxShadow = "0 1px 2px rgba(0,0,0,0.35)";
+    tag.style.whiteSpace = "nowrap";
+
+    root.appendChild(box);
+    root.appendChild(tag);
+  }
+
+  document.documentElement.appendChild(root);
 }
 
 export async function setInputFilesViaPlaywright(opts: {

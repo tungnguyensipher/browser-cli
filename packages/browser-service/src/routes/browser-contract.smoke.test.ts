@@ -62,6 +62,7 @@ const mocks = {
         body: "{}",
       })),
       highlightViaPlaywright: vi.fn(async () => {}),
+      findViaPlaywright: vi.fn(async () => ({ text: "Submit" })),
       getConsoleMessagesViaPlaywright: vi.fn(async () => [{ level: "error", text: "boom" }]),
       getPageErrorsViaPlaywright: vi.fn(async () => ({ errors: [] })),
       getNetworkRequestsViaPlaywright: vi.fn(async () => ({ requests: [] })),
@@ -380,5 +381,48 @@ describe("browser-service route smoke contract", () => {
       cdpUrl: "http://127.0.0.1:18792",
       targetId: tab.targetId,
     });
+  });
+
+  it("accepts selector highlight requests", async () => {
+    const { dispatcher, tab } = createHarness();
+
+    const highlight = await dispatcher.dispatch({
+      method: "POST",
+      path: "/highlight",
+      body: { selector: ".primary" },
+    });
+    expect(highlight.status).toBe(200);
+    expect(highlight.body).toEqual({
+      ok: true,
+      targetId: tab.targetId,
+    });
+    expect(mocks.pw.highlightViaPlaywright).toHaveBeenCalledWith(
+      expect.objectContaining({ selector: ".primary" }),
+    );
+  });
+
+  it("accepts annotated screenshot requests", async () => {
+    const { dispatcher } = createHarness();
+    const screenshot = await dispatcher.dispatch({
+      method: "POST",
+      path: "/screenshot",
+      body: { annotate: true },
+    });
+    expect(screenshot.status).toBe(200);
+    expect(screenshot.body).toMatchObject({ ok: true, labels: true, labelsCount: 1 });
+    expect(mocks.pw.screenshotWithLabelsViaPlaywright).toHaveBeenCalled();
+  });
+
+  it("accepts semantic find requests", async () => {
+    const { dispatcher } = createHarness();
+    const find = await dispatcher.dispatch({
+      method: "POST",
+      path: "/find",
+      body: { by: "role", value: "button", action: "click", name: "Submit" },
+    });
+    expect(find.status).toBe(200);
+    expect(mocks.pw.findViaPlaywright).toHaveBeenCalledWith(
+      expect.objectContaining({ by: "role", value: "button", action: "click", name: "Submit" }),
+    );
   });
 });

@@ -53,7 +53,21 @@ export type PwAiModule = {
   waitForViaPlaywright: (params: Record<string, unknown>) => Promise<void>;
   evaluateViaPlaywright: (params: Record<string, unknown>) => Promise<unknown>;
   responseBodyViaPlaywright: (params: Record<string, unknown>) => Promise<Record<string, unknown>>;
-  highlightViaPlaywright: (params: Record<string, unknown>) => Promise<void>;
+  highlightViaPlaywright: (params: {
+    cdpUrl: string;
+    targetId?: string;
+    ref?: string;
+    selector?: string;
+  }) => Promise<void>;
+  findViaPlaywright: (params: {
+    cdpUrl: string;
+    targetId?: string;
+    by: "role" | "text" | "label";
+    value: string;
+    action: "click" | "fill" | "type" | "hover" | "check" | "uncheck" | "text";
+    input?: string;
+    name?: string;
+  }) => Promise<{ text?: string | null } | void>;
   getConsoleMessagesViaPlaywright: (params: Record<string, unknown>) => Promise<unknown[]>;
   getPageErrorsViaPlaywright: (
     params: Record<string, unknown>,

@@ -77,4 +77,42 @@ describe("browser cli help", () => {
     expect(authStdout).toContain("set");
     expect(authStdout).toContain("copy");
   });
+
+  it("exposes selector highlight help", () => {
+    const highlightHelp = runCliHelp(["highlight"]);
+    const highlightStdout = new TextDecoder().decode(highlightHelp.stdout);
+    expect(highlightHelp.exitCode).toBe(0);
+    expect(highlightStdout).toContain("--selector");
+  });
+
+  it("exposes annotated screenshot help", () => {
+    const screenshotHelp = runCliHelp(["screenshot"]);
+    const screenshotStdout = new TextDecoder().decode(screenshotHelp.stdout);
+    expect(screenshotHelp.exitCode).toBe(0);
+    expect(screenshotStdout).toContain("--annotate");
+  });
+
+  it("lists find in top-level help", () => {
+    const result = runCliHelp([]);
+    const stdout = new TextDecoder().decode(result.stdout);
+    const stderr = new TextDecoder().decode(result.stderr);
+    expect(result.exitCode, `stdout:\n${stdout}\n\nstderr:\n${stderr}`).toBe(0);
+    expect(stdout).toContain("find");
+  });
+
+  it("documents first-cut semantic find commands", () => {
+    const findHelp = runCliHelp(["find"]);
+    const findStdout = new TextDecoder().decode(findHelp.stdout);
+    expect(findHelp.exitCode).toBe(0);
+    expect(findStdout).toContain("role");
+    expect(findStdout).toContain("text");
+    expect(findStdout).toContain("label");
+
+    const roleHelp = runCliHelp(["find", "role"]);
+    const roleStdout = new TextDecoder().decode(roleHelp.stdout);
+    expect(roleHelp.exitCode).toBe(0);
+    expect(roleStdout).toContain("<role>");
+    expect(roleStdout).toContain("<action>");
+    expect(roleStdout).toContain("[value]");
+  });
 });

@@ -14,6 +14,7 @@ export function registerBrowserInspectCommands(
     .description("Capture a screenshot (MEDIA:<path>)")
     .option("--target-id <id>", "CDP target id (or unique prefix)")
     .option("--full-page", "Capture full scrollable page", false)
+    .option("--annotate", "Overlay snapshot labels on the screenshot", false)
     .option("--ref <ref>", "ARIA ref from ai snapshot")
     .option("--element <selector>", "CSS selector for element screenshot")
     .option("--type <png|jpeg>", "Output type (default: png)", "png")
@@ -21,7 +22,13 @@ export function registerBrowserInspectCommands(
       const parent = parentOpts(cmd);
       const profile = parent?.browserProfile;
       try {
-        const result = await callBrowserRequest<{ path: string }>(
+        const result = await callBrowserRequest<{
+          path?: string;
+          imagePath?: string;
+          labels?: boolean;
+          labelsCount?: number;
+          labelsSkipped?: number;
+        }>(
           parent,
           {
             method: "POST",
@@ -30,6 +37,7 @@ export function registerBrowserInspectCommands(
             body: {
               targetId: opts.targetId?.trim() || undefined,
               fullPage: Boolean(opts.fullPage),
+              annotate: Boolean(opts.annotate),
               ref: opts.ref?.trim() || undefined,
               element: opts.element?.trim() || undefined,
               type: opts.type === "jpeg" ? "jpeg" : "png",
@@ -41,7 +49,11 @@ export function registerBrowserInspectCommands(
           defaultRuntime.log(JSON.stringify(result, null, 2));
           return;
         }
-        defaultRuntime.log(`MEDIA:${shortenHomePath(result.path)}`);
+        const mediaPath = result.imagePath ?? result.path;
+        if (!mediaPath) {
+          throw new Error("screenshot response did not include a media path");
+        }
+        defaultRuntime.log(`MEDIA:${shortenHomePath(mediaPath)}`);
       } catch (err) {
         defaultRuntime.error(danger(String(err)));
         defaultRuntime.exit(1);

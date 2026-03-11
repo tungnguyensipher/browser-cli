@@ -18,6 +18,9 @@ import {
 import type { BrowserRouteRegistrar } from "./types.js";
 import { jsonError, toBoolean, toNumber, toStringArray, toStringOrEmpty } from "./utils.js";
 
+const FIND_LOCATORS = new Set(["role", "text", "label"]);
+const FIND_ACTIONS = new Set(["click", "fill", "type", "hover", "check", "uncheck", "text"]);
+
 export function registerBrowserAgentActRoutes(
   app: BrowserRouteRegistrar,
   ctx: BrowserRouteContext,
@@ -356,9 +359,13 @@ export function registerBrowserAgentActRoutes(
   app.post("/highlight", async (req, res) => {
     const body = readBody(req);
     const targetId = resolveTargetIdFromBody(body);
-    const ref = toStringOrEmpty(body.ref);
-    if (!ref) {
-      return jsonError(res, 400, "ref is required");
+    const ref = toStringOrEmpty(body.ref) || undefined;
+    const selector = toStringOrEmpty(body.selector) || undefined;
+    if (!ref && !selector) {
+      return jsonError(res, 400, "either ref or selector is required");
+    }
+    if (ref && selector) {
+      return jsonError(res, 400, "provide exactly one of ref or selector");
     }
 
     await withPlaywrightRouteContext({
@@ -372,8 +379,63 @@ export function registerBrowserAgentActRoutes(
           cdpUrl,
           targetId: tab.targetId,
           ref,
+          selector,
         });
         res.json({ ok: true, targetId: tab.targetId });
+      },
+    });
+  });
+
+  app.post("/find", async (req, res) => {
+    const body = readBody(req);
+    const targetId = resolveTargetIdFromBody(body);
+    const by = toStringOrEmpty(body.by);
+    const value = toStringOrEmpty(body.value);
+    const action = toStringOrEmpty(body.action);
+    const input = toStringOrEmpty(body.input) || undefined;
+    const name = toStringOrEmpty(body.name) || undefined;
+
+    if (!FIND_LOCATORS.has(by)) {
+      return jsonError(res, 400, "by must be role|text|label");
+    }
+    if (!value) {
+      return jsonError(res, 400, "value is required");
+    }
+    if (!FIND_ACTIONS.has(action)) {
+      return jsonError(res, 400, "action must be click|fill|type|hover|check|uncheck|text");
+    }
+    if ((action === "fill" || action === "type") && input === undefined) {
+      return jsonError(res, 400, "input is required for fill and type");
+    }
+    if (name && by !== "role") {
+      return jsonError(res, 400, "name is only supported for by=role");
+    }
+    if (input !== undefined && action !== "fill" && action !== "type") {
+      return jsonError(res, 400, "input is only supported for fill and type");
+    }
+
+    await withPlaywrightRouteContext({
+      req,
+      res,
+      ctx,
+      targetId,
+      feature: "find",
+      run: async ({ cdpUrl, tab, pw }) => {
+        const result = await pw.findViaPlaywright({
+          cdpUrl,
+          targetId: tab.targetId,
+          by: by as "role" | "text" | "label",
+          value,
+          action: action as "click" | "fill" | "type" | "hover" | "check" | "uncheck" | "text",
+          input,
+          name,
+        });
+        res.json({
+          ok: true,
+          targetId: tab.targetId,
+          url: tab.url,
+          ...(action === "text" ? { text: result?.text ?? null } : {}),
+        });
       },
     });
   });

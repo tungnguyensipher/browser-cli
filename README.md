@@ -59,6 +59,10 @@ browser-cli press Enter                     # Press a key
 
 # Capture and debug
 browser-cli screenshot                      # Capture screenshot
+browser-cli screenshot --annotate           # Capture screenshot with ref labels
+browser-cli highlight --selector ".primary" # Highlight by CSS selector
+browser-cli find role button click --name "Submit" # Click by semantic role/name
+browser-cli find label "Email" fill "me@example.com" # Fill by form label
 browser-cli pdf                             # Save page as PDF
 browser-cli console                         # Get recent console messages
 ```

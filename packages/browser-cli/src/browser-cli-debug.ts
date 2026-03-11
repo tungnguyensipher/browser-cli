@@ -74,24 +74,31 @@ export function registerBrowserDebugCommands(
 ) {
   browser
     .command("highlight")
-    .description("Highlight an element by ref")
-    .argument("<ref>", "Ref id from snapshot")
+    .description("Highlight an element by ref or selector")
+    .argument("[ref]", "Ref id from snapshot")
+    .option("--selector <css>", "CSS selector to highlight")
     .option("--target-id <id>", "CDP target id (or unique prefix)")
-    .action(async (ref: string, opts, cmd) => {
+    .action(async (ref: string | undefined, opts, cmd) => {
       await withDebugContext(cmd, parentOpts, async ({ parent, profile }) => {
+        const refValue = typeof ref === "string" ? ref.trim() : "";
+        const selectorValue = typeof opts.selector === "string" ? opts.selector.trim() : "";
+        if ((refValue ? 1 : 0) + (selectorValue ? 1 : 0) !== 1) {
+          throw new Error("provide exactly one of ref or --selector");
+        }
         const result = await callDebugRequest(parent, {
           method: "POST",
           path: "/highlight",
           query: resolveProfileQuery(profile),
           body: {
-            ref: ref.trim(),
+            ref: refValue || undefined,
+            selector: selectorValue || undefined,
             targetId: opts.targetId?.trim() || undefined,
           },
         });
         if (printJsonResult(parent, result)) {
           return;
         }
-        defaultRuntime.log(`highlighted ${ref.trim()}`);
+        defaultRuntime.log(`highlighted ${refValue || selectorValue}`);
       });
     });
 

@@ -31,6 +31,13 @@ browser-clid run
 4. **Interact**: Use refs to click or type
 5. **Re-snapshot**: After navigation or DOM changes, get fresh refs
 
+The core workflow should still prefer refs for reliability, but there are a few quality-of-life shortcuts for common tasks:
+
+- `browser-cli find role button click --name "Submit"`
+- `browser-cli find label "Email" fill "me@example.com"`
+- `browser-cli highlight --selector ".primary"`
+- `browser-cli screenshot --annotate`
+
 ## Essential Commands
 
 ### Browser Lifecycle
@@ -56,6 +63,7 @@ browser-clid run
 | `browser-cli snapshot --format ai --refs aria` | Get snapshot with AI-friendly output and ARIA refs |
 | `browser-cli snapshot --format ai --refs role` | Get snapshot with AI-friendly output and role refs |
 | `browser-cli screenshot --full-page` | Capture a full-page screenshot |
+| `browser-cli screenshot --annotate` | Capture a screenshot with `eN` label overlays |
 
 ### Interaction (Use Refs from Snapshot)
 
@@ -65,12 +73,16 @@ browser-clid run
 | `browser-cli type <ref> "text" --submit` | Type text and submit form |
 | `browser-cli press <key>` | Press a key (Enter, Escape, etc.) |
 | `browser-cli scroll-into-view <ref>` | Scroll an element into view |
+| `browser-cli find role <role> <action> [value] --name <text>` | Find by role and perform an action |
+| `browser-cli find text <text> <action> [value]` | Find by visible text and perform an action |
+| `browser-cli find label <label> <action> [value]` | Find by form label and perform an action |
 
 ### Capture and Debug
 
 | Command | Description |
 |---------|-------------|
 | `browser-cli screenshot` | Capture screenshot |
+| `browser-cli highlight --selector ".primary"` | Highlight an element by CSS selector |
 | `browser-cli pdf` | Save page as PDF |
 | `browser-cli console` | Get recent console messages |
 

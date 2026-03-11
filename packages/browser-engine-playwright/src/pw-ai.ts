@@ -30,6 +30,7 @@ export {
   emulateMediaViaPlaywright,
   evaluateViaPlaywright,
   fillFormViaPlaywright,
+  findViaPlaywright,
   getConsoleMessagesViaPlaywright,
   getNetworkRequestsViaPlaywright,
   getPageErrorsViaPlaywright,
