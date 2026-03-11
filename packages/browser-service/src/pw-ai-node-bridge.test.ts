@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -71,7 +73,9 @@ describe("pw ai node bridge", () => {
   it("pins tsx workers to the repo tsconfig regardless of cwd", () => {
     const launch = resolveWorkerLaunchConfig({});
 
-    expect(launch.cwd.endsWith("/auto-browser")).toBe(true);
+    expect(fs.existsSync(path.join(launch.cwd, "package.json"))).toBe(true);
+    expect(fs.existsSync(path.join(launch.cwd, "tsconfig.json"))).toBe(true);
+    expect(fs.existsSync(path.join(launch.cwd, "packages"))).toBe(true);
     expect(launch.env.TSX_TSCONFIG_PATH).toBe(`${launch.cwd}/tsconfig.json`);
     expect(launch.args).toContain("--import");
     expect(launch.entrypoint.endsWith("/packages/browser-engine-playwright/src/node-worker.ts")).toBe(true);
