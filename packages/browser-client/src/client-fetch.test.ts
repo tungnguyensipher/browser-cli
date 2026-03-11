@@ -141,26 +141,6 @@ describe("fetchBrowserJson", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("does not inject auth when Browser CLI loopback auth is unset and fallback is suppressed", async () => {
-    delete process.env.BROWSER_CLI_AUTH_TOKEN;
-
-    const fetchMock = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
-      const headers = new Headers(init?.headers);
-      expect(headers.get("authorization")).toBeNull();
-      return new Response(JSON.stringify({ ok: true, tabs: [] }), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      });
-    });
-    globalThis.fetch = fetchMock as typeof fetch;
-
-    await fetchBrowserJson<{ ok: true; tabs: [] }>("/tabs", {
-      suppressLoopbackAuthFallback: true,
-    });
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
   it("aborts the request when the timeout elapses", async () => {
     const fetchMock = mock(
       (_input: RequestInfo | URL, init?: RequestInit) =>

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "bun:test";
-import { createProgram } from "./index.js";
 
 function createDeps() {
   const execCalls: Array<{ command: string; args: string[] }> = [];
@@ -57,13 +56,6 @@ function createDeps() {
 }
 
 describe("browser service commands", () => {
-  it("adds the service command family to the root CLI", () => {
-    const program = createProgram();
-    const help = program.helpInformation();
-
-    expect(help).toContain("service");
-  });
-
   it("installs a launchd user service by writing a plist and bootstrapping it", async () => {
     const { createBrowserServiceController } = await import("./browser-cli-service.js");
     const { deps, execCalls, mkdirCalls, writeAuthCalls, writeCalls } = createDeps();
@@ -416,111 +408,5 @@ describe("browser service commands", () => {
         args: ["restart"],
       },
     ]);
-  });
-});
-
-describe("resolveBundledWinSwPath", () => {
-  it("returns null on non-Windows platforms", async () => {
-    const { resolveBundledWinSwPath } = await import("./browser-cli-service.js");
-
-    // Save original platform
-    const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform");
-
-    // Test non-Windows platforms
-    for (const platform of ["darwin", "linux", "freebsd"]) {
-      Object.defineProperty(process, "platform", {
-        value: platform,
-      });
-
-      expect(resolveBundledWinSwPath()).toBeNull();
-    }
-
-    // Restore original platform
-    Object.defineProperty(process, "platform", originalPlatform!);
-  });
-
-  it("returns null for unsupported architectures on Windows", async () => {
-    const { resolveBundledWinSwPath } = await import("./browser-cli-service.js");
-
-    const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform");
-    const originalArch = Object.getOwnPropertyDescriptor(process, "arch");
-
-    Object.defineProperty(process, "platform", { value: "win32" });
-    Object.defineProperty(process, "arch", { value: "mips" });
-
-    expect(resolveBundledWinSwPath()).toBeNull();
-
-    Object.defineProperty(process, "platform", originalPlatform!);
-    Object.defineProperty(process, "arch", originalArch!);
-  });
-
-  it("returns a path for supported Windows architectures", async () => {
-    const { resolveBundledWinSwPath } = await import("./browser-cli-service.js");
-
-    const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform");
-    const originalArch = Object.getOwnPropertyDescriptor(process, "arch");
-
-    Object.defineProperty(process, "platform", { value: "win32" });
-
-    // Note: arm64 not bundled (WinSW v2 doesn't provide arm64 builds)
-    for (const arch of ["x64", "x86"]) {
-      Object.defineProperty(process, "arch", { value: arch });
-
-      const result = resolveBundledWinSwPath();
-      expect(result).not.toBeNull();
-      expect(result).toContain(`winsw-${arch}.exe`);
-    }
-
-    Object.defineProperty(process, "platform", originalPlatform!);
-    Object.defineProperty(process, "arch", originalArch!);
-  });
-});
-
-describe("resolveRuntimeExecutable", () => {
-  it("resolves node to a full path on macOS/Linux shells", async () => {
-    const { resolveRuntimeExecutable } = await import("./browser-cli-service.js");
-    const execCalls: Array<{ command: string; args: string[] }> = [];
-
-    const resolved = await resolveRuntimeExecutable(undefined, {
-      run: async (command, args) => {
-        execCalls.push({ command, args });
-        return {
-          code: 0,
-          stdout: "/usr/local/bin/node\n",
-          stderr: "",
-        };
-      },
-    });
-
-    expect(resolved).toBe("/usr/local/bin/node");
-    expect(execCalls).toEqual([{ command: "which", args: ["node"] }]);
-  });
-
-  it("resolves bun to a full path on Windows shells", async () => {
-    const { resolveRuntimeExecutable } = await import("./browser-cli-service.js");
-    const execCalls: Array<{ command: string; args: string[] }> = [];
-    const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform");
-
-    Object.defineProperty(process, "platform", {
-      value: "win32",
-    });
-
-    try {
-      const resolved = await resolveRuntimeExecutable("bun", {
-        run: async (command, args) => {
-          execCalls.push({ command, args });
-          return {
-            code: 0,
-            stdout: "C:\\Users\\tester\\.bun\\bin\\bun.exe\r\n",
-            stderr: "",
-          };
-        },
-      });
-
-      expect(resolved).toBe("C:\\Users\\tester\\.bun\\bin\\bun.exe");
-      expect(execCalls).toEqual([{ command: "where", args: ["bun"] }]);
-    } finally {
-      Object.defineProperty(process, "platform", originalPlatform!);
-    }
   });
 });

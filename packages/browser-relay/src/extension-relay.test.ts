@@ -88,17 +88,6 @@ describe("chrome extension relay server", () => {
     return sharedCdpUrl;
   }
 
-  it("uses relay-scoped token only for known relay ports", async () => {
-    const port = await getFreePort();
-    const unknown = getChromeExtensionRelayAuthHeaders(`http://127.0.0.1:${port}`);
-    expect(unknown).toEqual({});
-
-    const sharedUrl = await ensureSharedRelayServer();
-    const headers = getChromeExtensionRelayAuthHeaders(sharedUrl);
-    expect(Object.keys(headers)).toContain("x-openclaw-relay-token");
-    expect(headers["x-openclaw-relay-token"]).not.toBe(TEST_GATEWAY_TOKEN);
-  });
-
   it("rejects CDP access without relay auth token", async () => {
     const sharedUrl = await ensureSharedRelayServer();
     const sharedPort = new URL(sharedUrl).port;

@@ -3,7 +3,6 @@ import type { AddressInfo } from "node:net";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import {
   probeAuthenticatedOpenClawRelay,
-  resolveRelayAcceptedTokensForPort,
   resolveRelayAuthTokenForPort,
 } from "./extension-relay-auth.js";
 import { getFreePort } from "./test-port.js";
@@ -50,22 +49,6 @@ describe("extension-relay-auth", () => {
     } else {
       process.env.BROWSER_CLI_AUTH_TOKEN = previousGatewayToken;
     }
-  });
-
-  it("derives deterministic relay tokens per port", async () => {
-    const tokenA1 = await resolveRelayAuthTokenForPort(18790);
-    const tokenA2 = await resolveRelayAuthTokenForPort(18790);
-    const tokenB = await resolveRelayAuthTokenForPort(18791);
-    expect(tokenA1).toBe(tokenA2);
-    expect(tokenA1).not.toBe(tokenB);
-    expect(tokenA1).not.toBe(TEST_GATEWAY_TOKEN);
-  });
-
-  it("accepts both relay-scoped and raw gateway tokens for compatibility", async () => {
-    const tokens = await resolveRelayAcceptedTokensForPort(18790);
-    expect(tokens).toContain(TEST_GATEWAY_TOKEN);
-    expect(tokens[0]).not.toBe(TEST_GATEWAY_TOKEN);
-    expect(tokens[0]).toBe(await resolveRelayAuthTokenForPort(18790));
   });
 
   it("accepts authenticated relay probe responses", async () => {

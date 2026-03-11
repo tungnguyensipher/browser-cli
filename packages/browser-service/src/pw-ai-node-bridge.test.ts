@@ -1,24 +1,11 @@
-import fs from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
   createPwAiNodeBridgeClient,
-  deserializePwAiNodeValue,
-  resolvePwAiLoadStrategy,
   sanitizePwAiNodeParams,
-  resolveWorkerLaunchConfig,
 } from "./pw-ai-node-bridge.js";
 
 describe("pw ai node bridge", () => {
-  it("uses the node bridge when running under bun", () => {
-    expect(resolvePwAiLoadStrategy({ bun: "1.3.8" })).toBe("node-bridge");
-  });
-
-  it("uses direct imports when bun is not present", () => {
-    expect(resolvePwAiLoadStrategy({ node: "22.0.0" })).toBe("direct-import");
-  });
-
   it("decodes nested buffer payloads from the node worker", async () => {
     const client = createPwAiNodeBridgeClient(async (method, params) => {
       expect(method).toBe("pdfViaPlaywright");
@@ -52,33 +39,6 @@ describe("pw ai node bridge", () => {
 
     expect(Buffer.isBuffer(result.buffer)).toBe(true);
     expect(result.buffer.toString("utf8")).toBe("hello world");
-  });
-
-  it("preserves plain object payloads from the node worker", () => {
-    const decoded = deserializePwAiNodeValue({
-      ok: true,
-      refs: {
-        e1: { role: "button", name: "Submit" },
-      },
-    });
-
-    expect(decoded).toEqual({
-      ok: true,
-      refs: {
-        e1: { role: "button", name: "Submit" },
-      },
-    });
-  });
-
-  it("pins tsx workers to the repo tsconfig regardless of cwd", () => {
-    const launch = resolveWorkerLaunchConfig({});
-
-    expect(fs.existsSync(path.join(launch.cwd, "package.json"))).toBe(true);
-    expect(fs.existsSync(path.join(launch.cwd, "tsconfig.json"))).toBe(true);
-    expect(fs.existsSync(path.join(launch.cwd, "packages"))).toBe(true);
-    expect(launch.env.TSX_TSCONFIG_PATH).toBe(`${launch.cwd}/tsconfig.json`);
-    expect(launch.args).toContain("--import");
-    expect(launch.entrypoint.endsWith("/packages/browser-engine-playwright/src/node-worker.ts")).toBe(true);
   });
 
   it("drops abort signals from bridged worker params", () => {

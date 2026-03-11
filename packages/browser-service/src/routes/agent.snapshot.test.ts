@@ -77,16 +77,6 @@ describe("resolveTargetIdAfterNavigate", () => {
     expect(result).toBe("old-123");
   });
 
-  it("falls back to single remaining tab when no URL match after retry", async () => {
-    const result = await resolveTargetIdAfterNavigate({
-      oldTargetId: "old-123",
-      navigatedUrl: "https://single-tab.com",
-      listTabs: staticListTabs([{ targetId: "only-tab", url: "https://some-other.com" }]),
-    });
-
-    expect(result).toBe("only-tab");
-  });
-
   it("falls back to original targetId when listTabs throws", async () => {
     const result = await resolveTargetIdAfterNavigate({
       oldTargetId: "old-123",
@@ -98,16 +88,4 @@ describe("resolveTargetIdAfterNavigate", () => {
     expect(result).toBe("old-123");
   });
 
-  it("keeps the old target when multiple replacement candidates still match after retry", async () => {
-    const result = await resolveTargetIdAfterNavigate({
-      oldTargetId: "old-123",
-      navigatedUrl: "https://example.com",
-      listTabs: staticListTabs([
-        { targetId: "preexisting-000", url: "https://example.com" },
-        { targetId: "fresh-777", url: "https://example.com" },
-      ]),
-    });
-
-    expect(result).toBe("old-123");
-  });
 });

@@ -1,61 +1,51 @@
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
-import { afterEach, describe, expect, it } from "bun:test";
-import { resolveBrowserControlAuth } from "../src/http-auth.js";
+import type { IncomingMessage } from "node:http";
+import { describe, expect, it } from "bun:test";
+import { isAuthorizedBrowserRequest } from "../src/http-auth.ts";
 
-const tempDirs: string[] = [];
-
-function createTempDir(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "browser-cli-http-auth-"));
-  tempDirs.push(dir);
-  return dir;
+function requestWithHeaders(
+  headers: IncomingMessage["headers"],
+): IncomingMessage {
+  return { headers } as IncomingMessage;
 }
 
-afterEach(() => {
-  while (tempDirs.length > 0) {
-    const dir = tempDirs.pop();
-    if (dir) {
-      fs.rmSync(dir, { recursive: true, force: true });
-    }
-  }
-});
-
 describe("http auth", () => {
-  it("falls back to machine auth when env and runtime config do not provide a token", () => {
-    const dir = createTempDir();
-    const machineAuthPath = path.join(dir, "auth.json");
-    fs.writeFileSync(machineAuthPath, JSON.stringify({ token: "machine-token" }), "utf8");
-
-    const auth = resolveBrowserControlAuth(
-      {},
-      {
-        BROWSER_CLI_MACHINE_AUTH_PATH: machineAuthPath,
-      },
-      {
-        allowLegacyGatewayTokenFallback: false,
-      },
+  it("accepts matching bearer tokens", () => {
+    const authorized = isAuthorizedBrowserRequest(
+      requestWithHeaders({
+        authorization: "Bearer gateway-token",
+      }),
+      { token: "gateway-token" },
     );
 
-    expect(auth).toEqual({ token: "machine-token" });
+    expect(authorized).toBe(true);
   });
 
-  it("prefers BROWSER_CLI_AUTH_TOKEN over machine auth", () => {
-    const dir = createTempDir();
-    const machineAuthPath = path.join(dir, "auth.json");
-    fs.writeFileSync(machineAuthPath, JSON.stringify({ token: "machine-token" }), "utf8");
-
-    const auth = resolveBrowserControlAuth(
-      {},
-      {
-        BROWSER_CLI_AUTH_TOKEN: "env-token",
-        BROWSER_CLI_MACHINE_AUTH_PATH: machineAuthPath,
-      },
-      {
-        allowLegacyGatewayTokenFallback: false,
-      },
+  it("accepts matching passwords from basic auth and the relay password header", () => {
+    const basicAuthorized = isAuthorizedBrowserRequest(
+      requestWithHeaders({
+        authorization: `Basic ${Buffer.from("user:secret-password").toString("base64")}`,
+      }),
+      { password: "secret-password" },
+    );
+    const headerAuthorized = isAuthorizedBrowserRequest(
+      requestWithHeaders({
+        "x-openclaw-password": "secret-password",
+      }),
+      { password: "secret-password" },
     );
 
-    expect(auth).toEqual({ token: "env-token" });
+    expect(basicAuthorized).toBe(true);
+    expect(headerAuthorized).toBe(true);
+  });
+
+  it("rejects incorrect credentials", () => {
+    const authorized = isAuthorizedBrowserRequest(
+      requestWithHeaders({
+        authorization: "Bearer wrong-token",
+      }),
+      { token: "gateway-token", password: "secret-password" },
+    );
+
+    expect(authorized).toBe(false);
   });
 });

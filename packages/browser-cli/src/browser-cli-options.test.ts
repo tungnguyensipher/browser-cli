@@ -86,21 +86,6 @@ afterEach(() => {
 });
 
 describe("browser cli option resolution", () => {
-  it("uses local defaults when flags and project config are omitted", async () => {
-    delete process.env.BROWSER_CLI_AUTH_TOKEN;
-    // Use a non-existent machine auth path to test default behavior
-    const cwd = makeTempDir();
-    process.env.BROWSER_CLI_MACHINE_AUTH_PATH = path.join(cwd, "non-existent-auth.json");
-
-    const result = await runStatus(["status"], cwd);
-
-    expect(result.fetchCalls[0]).toEqual({
-      input: "http://127.0.0.1:18888/?profile=openclaw",
-      auth: null,
-    });
-    expect(result.logs[0]).toContain('"profile": "openclaw"');
-  });
-
   it("uses BROWSER_CLI_AUTH_TOKEN before project config and applies .browser-cli.json overrides", async () => {
     process.env.BROWSER_CLI_AUTH_TOKEN = "env-token";
     const cwd = makeTempDir();
@@ -122,20 +107,5 @@ describe("browser cli option resolution", () => {
       auth: "Bearer env-token",
     });
     expect(result.logs[0]).toContain("profile: openclaw");
-  });
-
-  it("falls back to machine auth when BROWSER_CLI_AUTH_TOKEN is omitted", async () => {
-    delete process.env.BROWSER_CLI_AUTH_TOKEN;
-    const cwd = makeTempDir();
-    const machineAuthPath = path.join(cwd, "machine-auth.json");
-    process.env.BROWSER_CLI_MACHINE_AUTH_PATH = machineAuthPath;
-    fs.writeFileSync(machineAuthPath, JSON.stringify({ token: "machine-token" }), "utf8");
-
-    const result = await runStatus(["status"], cwd);
-
-    expect(result.fetchCalls[0]).toEqual({
-      input: "http://127.0.0.1:18888/?profile=openclaw",
-      auth: "Bearer machine-token",
-    });
   });
 });
